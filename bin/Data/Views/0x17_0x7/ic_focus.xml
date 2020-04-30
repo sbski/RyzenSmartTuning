@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<!--
+    Show instruction cache (IC) measurements
+    View configuration
+    Version: 1.0
+    Processor: AMD family 17h
+    Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+
+    The ic_focus view should be available when instruction cache fetches,
+    instruction cache misses, and retired instructions are available.
+
+    Related data collection configurations: inst_access.xml
+ -->
+
+<view_configuration>
+
+  <view name="Instruction cache report"
+        separate_cpus="F"
+        separate_processes="F"
+        separate_threads="F"
+        default_view="T"
+        >
+
+    <data>
+      <event id="Ret_instructions" select="c0" mask="00" />
+      <event id="CPU_clocks"       select="76" mask="00" />
+    </data>
+
+    <output>
+      <column title="Ret inst" sort="descending">
+        <value id="Ret_instructions" />
+      </column>
+      <column title="CPU clocks" sort="none">
+        <value id="CPU_clocks" />
+      </column>
+      <column title="IPC" sort="descending">
+        <ratio left="Ret_instructions" right="CPU_clocks" />
+      </column>
+      <column title="CPI" sort="none">
+        <ratio left="CPU_clocks" right="Ret_instructions" />
+      </column>
+    </output>
+
+    <tool_tip>
+      Show instruction cache measurements
+    </tool_tip>
+
+    <description>
+      Use this view to identify regions of code that miss in the instruction
+      cache (IC.)
+    </description>
+
+  </view>
+
+</view_configuration>

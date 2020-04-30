@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<!--
+    Show branch-related measurements view configuration.
+
+    The br_assess view should be available when retire instructions,
+    branches and mispredicted branches are available.
+
+    Related DC configurations: branch.xml
+
+    Family : 17h
+    Model  : 00h-0Fh
+    Flavor : Public
+    Copyright (c) 2018-2019 Advanced Micro Devices, Inc.
+-->
+<view_configuration>
+    <view name="Investigate Branching" separate_cpus="F" separate_processes="F" separate_threads="F" default_view="T">
+        <data>
+            <event id="CPU_clocks" select="76" mask="00"/>
+            <event id="Ret_instructions" select="C0" mask="00"/>
+            <event id="Branches" select="C2" mask="00"/>
+            <event id="Mispred_branches" select="C3" mask="00"/>
+            <event id="Taken_branches" select="C4" mask="00"/>
+            <event id="Near_returns" select="C8" mask="00"/>
+            <event id="Mispred_near_ret" select="C9" mask="00"/>
+            <event id="ExRetBrnIndMisp" select="CA" mask="00"/>
+            <event id="BpL1BTBCorrect" select="8A" mask="00"/>
+            <event id="BpL2BTBCorrect" select="8B" mask="00"/>
+        </data>
+        <output>
+            <column title="CPU clocks" sort="descending">
+                <value id="CPU_clocks"/>
+            </column>
+            <column title="Ret inst" sort="none">
+                <value id="Ret_instructions"/>
+            </column>
+            <column title="IPC" sort="none">
+                <ratio left="Ret_instructions" right="CPU_clocks"/>
+            </column>
+            <column title="Ret branch" sort="none" visible="F">
+                <value id="Branches"/>
+            </column>
+            <column title="Ret misp branch" sort="none" visible="F">
+                <value id="Mispred_branches"/>
+            </column>
+            <column title="Ret taken branch" sort="none" visible="F">
+                <value id="Taken_branches"/>
+            </column>
+            <column title="Ret near RET" sort="none" visible="F">
+                <value id="Near_returns"/>
+            </column>
+            <column title="Ret near RET misp" sort="none" visible="F">
+                <value id="Mispred_near_ret"/>
+            </column>
+            <column title="ExRetBrnIndMisp" sort="none" visible="F">
+                <value id="ExRetBrnIndMisp"/>
+            </column>
+            <column title="BpL1BTBCorrect" sort="none" visible="F">
+                <value id="BpL1BTBCorrect"/>
+            </column>
+            <column title="BpL2BTBCorrect" sort="none" visible="F">
+                <value id="BpL2BTBCorrect"/>
+            </column>
+            <column title="Retired Branch Instructions PTI" sort="none" visible="T">
+                <ratio scale="1000" left="Branches" right="Ret_instructions"/>
+            </column>
+            <column title="Retired Branch Instructions Mispredicted PTI" sort="none" visible="T">
+                <ratio scale="1000" left="Mispred_branches" right="Ret_instructions"/>
+            </column>
+            <column title="%Retired Branch Instructions Mispredicted" sort="none" visible="T">
+                <ratio scale="100" left="Mispred_branches" right="Branches"/>
+            </column>
+            <column title="Retired Taken Branch Instructions PTI" sort="none" visible="T">
+                <ratio scale="1000" left="Taken_branches" right="Ret_instructions"/>
+            </column>
+            <column title="Retired Indirect Branch Instructions Mispredicted PTI" sort="none" visible="T">
+                <ratio scale="1000" left="ExRetBrnIndMisp" right="Ret_instructions"/>
+            </column>
+            <column title="Retired Near Returns PTI" sort="none" visible="T">
+                <ratio scale="1000" left="Near_returns" right="Ret_instructions"/>
+            </column>
+            <column title="Retired Near Returns Mispredicted PTI" sort="none" visible="T">
+                <ratio scale="1000" left="Mispred_near_ret" right="Ret_instructions"/>
+            </column>
+            <column title="L1 BTB Correction PTI" sort="none" visible="T">
+                <ratio scale="1000" left="BpL1BTBCorrect" right="Ret_instructions"/>
+            </column>
+            <column title="L2 BTB Correction PTI" sort="none" visible="T">
+                <ratio scale="1000" left="BpL2BTBCorrect" right="Ret_instructions"/>
+            </column>
+        </output>
+        <tool_tip>Show branch/misprediction measurements</tool_tip>
+        <description>Use this view to find code with a high branch density and poorly predicted branches.</description>
+    </view>
+</view_configuration>

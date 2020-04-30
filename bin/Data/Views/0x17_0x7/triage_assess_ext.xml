@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+
+<!--
+    Overall assessment of performance
+    View configuration
+    Version: 1.0
+    Processor: AMD family 17h
+    Models: 70h-7Fh
+    Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+
+    The triage view displays an overall assessment of performance. It
+    displays select computed measurements to quickly indicate possible
+    performance culprits for investigation.
+
+    Related DC configuration: assess.xml
+ -->
+
+<view_configuration>
+    <view name="Assess Performance (Extended)" separate_cpus="F" separate_processes="F" separate_threads="F" default_view="T">
+        <data>
+            <event id="CPU_clocks"       select="76" mask="00" />
+            <event id="Ret_instructions" select="c0" mask="00" />
+            <event id="Branches"         select="c2" mask="00" />
+            <event id="Mispred_branches" select="c3" mask="00" />
+            <event id="ALUTokenStall"    select="AF" mask="08" />
+            <event id="CacheableLocks"   select="25" mask="0E" />
+            <event id="DC_accesses"      select="29" mask="07" />
+            <event id="DC_misses"        select="60" mask="C8" />
+            <event id="Misalign_access"  select="47" mask="00" />
+            <event id="StliOther"        select="24" mask="02" />
+            <event id="FpDispFaults"     select="0e" mask="0F" />
+            <event id="DC_refills_RMT_DRAM"  select="43" mask="40" />
+            <event id="DC_refills_RMT_CCX"   select="43" mask="10" />
+            <event id="DC_refills_DRAM"      select="43" mask="08" />
+            <event id="DC_refills_CCX"       select="43" mask="02" />
+            <event id="DC_refills_L2"        select="43" mask="01" />
+        </data>
+        <output>
+            <column title="Cycles not in Halt" sort="descending" visible="T" >
+                <value id="CPU_clocks" />
+            </column>
+            <column title="Retired Instructions" sort="none" visible="T" >
+                <value id="Ret_instructions" />
+            </column>
+            <column title="Ret branch" sort="none" visible="F" >
+                <value id="Branches" />
+            </column>
+            <column title="Ret misp branch" sort="none" visible="F" >
+                <value id="Mispred_branches" />
+            </column>
+            <column title="DC accesses" sort="none" visible="F" >
+                <value id="DC_accesses" />
+            </column>
+            <column title="MAB Alloc" sort="none" visible="F" >
+                <value id="DC_misses" />
+            </column>
+            <column title="DC_refills_RMT_DRAM" sort="none" visible="F" >
+                <value id="DC_refills_RMT_DRAM" />
+            </column>
+            <column title="DC_refills_RMT_CCX" sort="none" visible="F" >
+                <value id="DC_refills_RMT_CCX" />
+            </column>
+            <column title="DC_refills_DRAM" sort="none" visible="F" >
+                <value id="DC_refills_DRAM" />
+            </column>
+            <column title="DC_refills_CCX" sort="none" visible="F" >
+                <value id="DC_refills_CCX" />
+            </column>
+            <column title="DC_refills_L2" sort="none" visible="F" >
+                <value id="DC_refills_L2" />
+            </column>
+            <column title="ALUTokenStall cycles" sort="none" visible="F" >
+                <!-- Dynamic Token Dispatch Stall Cycles -->
+                <value id="ALUTokenStall" />
+            </column>
+            <column title="LsLocks" sort="none" visible="F" >
+                <value id="CacheableLocks" />
+            </column>
+            <column title="StliOther" sort="none" visible="F" >
+                <!-- Bad Status 2 -->
+                <value id="StliOther" />
+            </column>
+            <column title="Misalign loads" sort="none" visible="F" >
+                <value id="Misalign_access" />
+            </column>
+            <column title="FpDispFaults" sort="none" visible="F" >
+                <value id="FpDispFaults" />
+            </column>
+            <column title="IPC" sort="none" visible="T" >
+                <ratio left="Ret_instructions" right="CPU_clocks" />
+            </column>
+            <column title="Retired Branch Instructions PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="Branches" right="Ret_instructions" />
+            </column>
+            <column title="%Retired Branch Instructions Mispredicted" sort="none" visible="T" >
+                <ratio scale="100" left="Mispred_branches" right="Branches" />
+            </column>
+            <column title="Data Cache Accesses PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_accesses" right="Ret_instructions" />
+            </column>
+            <column title="%Data Cache Miss" sort="none" visible="T" >
+                <ratio scale="100" left="DC_misses" right="DC_accesses" />
+            </column>
+            <column title="Data Cache Refills RMT DRAM PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_refills_RMT_DRAM" right="Ret_instructions" />
+            </column>
+            <column title="Data Cache Refills RMT CCX PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_refills_RMT_CCX" right="Ret_instructions" />
+            </column>
+            <column title="Data Cache Refills DRAM PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_refills_DRAM" right="Ret_instructions" />
+            </column>
+            <column title="Data Cache Refills CCX PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_refills_CCX" right="Ret_instructions" />
+            </column>
+            <column title="Data Cache Refills L2 PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="DC_refills_L2" right="Ret_instructions" />
+            </column>
+            <column title="Misalign Loads PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="Misalign_access" right="Ret_instructions" />
+            </column>
+            <column title="ALUTokenStall PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="ALUTokenStall" right="Ret_instructions" />
+            </column>
+            <column title="CacheableLocks PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="CacheableLocks" right="Ret_instructions" />
+            </column>
+            <column title="StliOther PTI" sort="none" visible="T" >
+                <ratio scale="1000" left="StliOther" right="Ret_instructions" />
+            </column>
+            <column title="FpDispFaults PTC" sort="none" visible="T" >
+                <ratio scale="1000" left="FpDispFaults" right="CPU_clocks" />
+            </column>
+        </output>
+        <tool_tip>Show overall assessment of performance</tool_tip>
+        <description>This view gives an overall picture of performance. Use it to find possible issues for deeper investigation.</description>
+    </view>
+</view_configuration>

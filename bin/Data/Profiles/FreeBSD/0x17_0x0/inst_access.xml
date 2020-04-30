@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+    Analyze instruction fetch and ITLB behavior using event-based profiling
+
+    Family : 17h
+    Model  : 00h-0Fh
+    Flavor : Public
+    Copyright (c) 2018-2019 Advanced Micro Devices, Inc.
+-->
+<dc_configuration>
+    <ebp name="Investigate Instruction Access" mux_period="1">
+        <event select="C0" mask="00" os="T" user="T" count="250000"/>
+        <event select="80" mask="00" os="T" user="T" count="250000"/>
+        <event select="81" mask="00" os="T" user="T" count="100000"/>
+        <event select="84" mask="00" os="T" user="T" count="100000"/>
+        <event select="85" mask="00" os="T" user="T" count="100000"/>
+        <event select="76" mask="00" os="T" user="T" count="250000"/>
+        <tool_tip>Analyze fetch and ITLB behavior</tool_tip>
+        <description>Use this configuration to find instruction fetches with poor L1 instruction cache locality and poor ITLB behavior.</description>
+    </ebp>
+</dc_configuration>

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<!--
+    Analyze L1 data access and DTLB behavior using event-based profiling
+    Version: 1.0
+    Processor: AMD family 17h
+    Models: 70h-7Fh
+    Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+ -->
+
+<dc_configuration>
+  <ebp name="Investigate Data Access" mux_period="1">
+    <event select="C0" mask="00" os="T" user="T" count="250000"></event>
+    <!--<event select="29" mask="07" os="T" user="T" count="250000"></event>-->
+    <event select="60" mask="C8" os="T" user="T" count="100000"></event>
+    <event select="45" mask="FF" os="T" user="T" count="100000"></event>
+    <!--<event select="47" mask="00" os="T" user="T" count="25000"></event>-->
+    <event select="76" mask="00" os="T" user="T" count="250000"></event>
+    <event select="43" mask="11" os="T" user="T" count="100000"></event>
+    <tool_tip>Analyze data access and DTLB behavior</tool_tip>
+    <description>Use this configuration to find data access operations with poor L1 data cache locality and poor DTLB behavior.</description>
+  </ebp>
+</dc_configuration>
