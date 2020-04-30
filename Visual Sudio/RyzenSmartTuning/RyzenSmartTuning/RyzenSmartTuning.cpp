@@ -81,7 +81,7 @@ int main()
     
     // Set the timer configuration
     AMDTUInt32 samplingInterval = 500;      // in milliseconds
-    AMDTUInt32 profilingDuration = 1000000;      // in seconds
+    AMDTUInt32 profilingDuration = 10;      // in seconds
 
 
 
@@ -219,7 +219,7 @@ int main()
 
             // check if we exceeded the profile duration
             if ((profilingDuration > 0)
-                && (pSampleData->m_elapsedTimeMs >= (profilingDuration * 1000)))
+                && (pSampleData->m_elapsedTimeMs >= (double(1000) * profilingDuration)))
             {
                 stopProfiling = true;
             }
@@ -230,6 +230,8 @@ int main()
                 hResult = AMDTPwrStopProfiling();
                 assert(AMDT_STATUS_OK == hResult);
                 isProfiling = false;
+
+                //cleanup goes here
             }
         }
     }
