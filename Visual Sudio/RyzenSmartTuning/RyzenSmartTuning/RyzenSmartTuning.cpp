@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
+#include <thread>
 #ifdef __linux__
 #include <unistd.h>
 #endif
@@ -16,229 +17,203 @@
 #include <AMDTPowerProfileApi.h>
 
 
-int main()
+//integration of RyzenADJ
+class RyzenAdj
 {
-    AMDTResult hResult = AMDT_STATUS_OK;
-    // Initialize online mode
-    hResult = AMDTPwrProfileInitialize(AMDT_PWR_MODE_TIMELINE_ONLINE);
-    // --- Handle the error
 
-    // Configure the profile run
-    //   1. Get the supported counters
-    //   2. Enable all the counter
-    //   3. Set the timer configuration
+};
 
-    // 1. Get the supported counter details
-    AMDTUInt32 nbrCounters = 0;
-    AMDTPwrCounterDesc* pCounters = nullptr;
+class UProfData
+{
+    //-------------------------- Other data --------------------------
+    AMDTUInt32 threadCount;
 
-    hResult = AMDTPwrGetSupportedCounters(&nbrCounters, &pCounters);
-    assert(AMDT_STATUS_OK == hResult);
-
-    AMDTPwrCounterDesc* pCurrCounter = pCounters;
-
-
-    int limitIndex = 0; //not being used currently
-    float targetSTAPM_Limit = 28;
-
-    int slowIndex = 0;
-    float targetSlowValue = 30;
-    float slowValue = 0;
-
-    int fastIndex = 0;
-    float targetFastValue = 32;
-    float fastValue = 0;
-
-    int temperatureIndex = 0;
-    float targetTemperatureValue = 85;
-    float temperatureValue = 0;
-
-    int targetGfxMax = 700;
-
-    bool applySettings = false;
+    AMDTUInt32 nbrCounters;
+    AMDTPwrCounterDesc* pCounters;
+    AMDTPwrCounterDesc* pCurrCounter;
+    AMDTResult hResult;
     
-    bool justShowMismach = true;
+    AMDTUInt32 samplingInterval;       // in milliseconds
+    //AMDTUInt32 profilingDuration;      // in seconds
+    
+    AMDTUInt32 nbrSamples;
+
+    //pointer to sample data
+    AMDTPwrSample* pSampleData;
+
+    AMDTUInt32 blah = 0;
 
 
-
-    //--------------------------------------------------------------------------------------------------------------------
-    // Neeed to add array to grab all the info here so that it's not done realtime (for efficency.)
-    //--------------------------------------------------------------------------------------------------------------------
-
-
-    for (AMDTUInt32 cnt = 0; cnt < nbrCounters; cnt++, pCurrCounter++)
+public:
+    UProfData(int setInterval)
     {
-        if (nullptr != pCurrCounter)
+        nbrSamples = 0;
+        pSampleData = nullptr;
+        
+        // Thread data
+        threadCount = std::thread::hardware_concurrency();
+
+        nbrCounters = 0;
+        pCounters = nullptr;
+
+        //try to initialize online mode
+        hResult = AMDTPwrProfileInitialize(AMDT_PWR_MODE_TIMELINE_ONLINE);
+        //assert that it does
+        assert(AMDT_STATUS_OK == hResult);
+
+
+        //get the number of counters
+        hResult = AMDTPwrGetSupportedCounters(&nbrCounters, &pCounters);
+        //assurt results
+        assert(AMDT_STATUS_OK == hResult);
+
+        //setting the pointer of pCurrCounter
+        pCurrCounter = pCounters;
+
+
+        AMDTUInt32 nbrSamples = 0;
+        
+        //std::cout << nbrCounters << "\n";
+
+        //enable all counters
+        for (AMDTUInt32 cnt = 0; cnt < nbrCounters; cnt++, pCurrCounter++)
         {
-            // Enable all the counters
-            hResult = AMDTPwrEnableCounter(pCurrCounter->m_counterID);
-            assert(AMDT_STATUS_OK == hResult);
+            //std::cout << "         cnt: " << cnt << "\n";
+            //std::cout << " nbrCounters: " << nbrCounters << "\n";
+            //std::cout << "pCurrCounter: " << pCurrCounter << "\n";
+            if (nullptr != pCurrCounter)
+            {
+                // Enable all the counters
+                hResult = AMDTPwrEnableCounter(pCurrCounter->m_counterID);
+                if (AMDT_STATUS_OK == hResult)
+                {
+                    //std::cout << "AMDT_STATUS_OK\n";
+                    AMDTPwrCounterDesc counterDesc;
+                    AMDTPwrGetCounterDesc(pCurrCounter->m_counterID, &counterDesc);
+                    //fprintf(stdout, "%s\n", counterDesc.m_name);
+                }
+                else
+                {
+                    //std::cout << "Error: " << hResult << "\n";
+                    //system("pause");
+                }
+
+                //assert 
+                //assert(AMDT_STATUS_OK == hResult);
+            }
+            //else std::cout << "nullptr\n";
+                
         }
+
+
+
+        //setting up sampling interval
+        samplingInterval = setInterval;
+        nbrSamples = 0;
+        hResult = AMDTPwrSetTimerSamplingPeriod(samplingInterval);
+        assert(AMDT_STATUS_OK == hResult);
+        
+
+        //system("pause");
+
+
+        
+        
+        
     }
 
-    
-    
-    
-    // Set the timer configuration
-    AMDTUInt32 samplingInterval = 500;      // in milliseconds
-    AMDTUInt32 profilingDuration = 10;      // in seconds
 
-
-
-    //setting the sampling period to the defined sampling interval
-    hResult = AMDTPwrSetTimerSamplingPeriod(samplingInterval);
-    assert(AMDT_STATUS_OK == hResult);
-
-
-
-    // Start the Profile Run
-    hResult = AMDTPwrStartProfiling();
-    assert(AMDT_STATUS_OK == hResult);
-
-    // Collect and report the counter values periodically
-    //   1. Take the snapshot of the counter values
-    //   2. Read the counter values
-    //   3. Report the counter values
-
-    volatile bool isProfiling = true;
-    bool stopProfiling = false;
-    AMDTUInt32 nbrSamples = 0;
-    
-    while (isProfiling)
+    bool update()
     {
-        // sleep for refresh duration - at least equivalent to the sampling interval specified
+        
+        do
+        {
+            // sleep for refresh duration - at least equivalent to the sampling interval specified
 #if defined ( WIN32 )
         // Windows
-        //Sleep(samplingInterval);
+            Sleep(samplingInterval);
 #else
         // Linux
-        usleep(samplingInterval * 1000);
+            usleep(samplingInterval * 1000);
 #endif
 
-        // read all the counter values
-        AMDTPwrSample* pSampleData = nullptr;
+            // read all the counter values
+            AMDTPwrSample* pSampleData = nullptr;
 
-        hResult = AMDTPwrReadAllEnabledCounters(&nbrSamples, &pSampleData);
+            hResult = AMDTPwrReadAllEnabledCounters(&nbrSamples, &pSampleData);
 
-        if (AMDT_STATUS_OK != hResult)
-        {
-            continue;
-        }
-
-        if (nullptr != pSampleData)
-        {
-            // iterate over all the samples and report the sampled counter values
-            for (AMDTUInt32 idx = 0; idx < nbrSamples; idx++)
+            if (AMDT_STATUS_OK != hResult)
             {
-
-                system("CLS");
-                // Iterate over the sampled counter values and print
-                for (unsigned int i = 0; i < pSampleData[idx].m_numOfCounter; i++)
-                {
-                    if (nullptr != pSampleData[idx].m_counterValues)
-                    {
-                        // Get the counter descriptor to print the counter name
-                        AMDTPwrCounterDesc counterDesc;
-                        AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
-
-                        fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[idx].m_counterValues->m_data);
-
-                        if (strcmp(counterDesc.m_name, "Socket0 PPT Fast Limit") == 0)
-                        {
-                            fastIndex = i;
-                            fastValue = pSampleData[idx].m_counterValues->m_data;
-                            
-                            //fprintf(stdout, "index: %i value: %f\n", i, fastValue);
-                            //system("PAUSE");
-                        }
-                        else if (strcmp(counterDesc.m_name, "Socket0 PPT Slow Limit") == 0)
-                        {
-                            slowIndex = i;
-                            slowValue = pSampleData[idx].m_counterValues->m_data;
-                            //fprintf(stdout, "index: %i value: %f\n", i, slowValue);
-                        }
-                        else if (strcmp(counterDesc.m_name, "Socket0 Temperature") == 0)
-                        {
-                            temperatureIndex = i;
-                            temperatureValue = pSampleData[idx].m_counterValues->m_data;
-                            //fprintf(stdout, "index: %i value: %f\n", i, temperatureValue);
-                        }
-
-
-
-                        pSampleData[idx].m_counterValues++;
-                    }
-
-                    
-
-
-                } // iterate over the sampled counters
-
-
-
-                //check that the actual values mach 
-                //AMDTPwrCounterDesc counterDesc;
-                //AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
-
-                if (round(fastValue) != round(targetFastValue))
-                {
-                    fprintf(stdout, "Fast Mismach: %f | %f\n", fastValue, targetFastValue);
-                    applySettings = TRUE;
-                }
-                if (round(slowValue) != round(targetSlowValue))
-                {
-                    fprintf(stdout, "Slow Mismach: %f | %f\n", slowValue, targetSlowValue);
-                    applySettings = TRUE;
-                }
-                if (temperatureValue >= targetTemperatureValue)
-                {
-                    fprintf(stdout, "Temperature Mismach: %f | %f\n", temperatureValue, targetTemperatureValue);
-                    applySettings = TRUE;
-                }
-
-                if (applySettings)
-                {
-                    if (justShowMismach)
-                    {
-                        fprintf(stdout, "\n-------------------\n- change detected -\n-------------------");
-                    }
-                    else
-                    {
-                        system("ryzenadj.exe --stapm-limit=28000 --fast-limit=32000 --slow-limit=30000 --tctl-temp=85");
-                        fprintf(stdout, "Settings Applied!");
-                    }
-
-                    //system("TIMEOUT 1");
-                    applySettings = FALSE;
-                }
-
-
-
-                //fprintf(stdout, "\n\n\n\n");
-            } // iterate over all the samples collected
-
-            // check if we exceeded the profile duration
-            if ((profilingDuration > 0)
-                && (pSampleData->m_elapsedTimeMs >= (double(1000) * profilingDuration)))
-            {
-                stopProfiling = true;
+                continue;
             }
+            system("cls");
 
-            if (stopProfiling)
+            if (nullptr != pSampleData)
             {
-                // stop the profiling
-                hResult = AMDTPwrStopProfiling();
-                assert(AMDT_STATUS_OK == hResult);
-                isProfiling = false;
+                // iterate over all the samples and report the sampled counter values
+                for (AMDTUInt32 idx = nbrSamples-1; idx < nbrSamples; idx++)
+                {
+                    // Iterate over the sampled counter values and print
+                    for (unsigned int i = 0; i < pSampleData[idx].m_numOfCounter; i++)
+                    {
+                        if (nullptr != pSampleData[idx].m_counterValues)
+                        {
+                            // Get the counter descriptor to print the counter name
+                            AMDTPwrCounterDesc counterDesc;
+                            AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
 
-                //cleanup goes here
+                            fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[idx].m_counterValues->m_data);
+
+                            pSampleData[idx].m_counterValues++;
+                        }
+                    } // iterate over the sampled counters
+
+                    fprintf(stdout, "\n");
+                } // iterate over all the samples collected
+
             }
-        }
+        } while (false);
+        return true;
+        
+    }
+    bool startProf()
+    {
+        hResult = AMDTPwrStartProfiling();
+        return(AMDT_STATUS_OK == hResult);
+    }
+    bool stopProf()
+    {
+        hResult = AMDTPwrStopProfiling();
+        return (AMDT_STATUS_OK == hResult);
     }
 
-    // Close the profiler
-    hResult = AMDTPwrProfileClose();
-    assert(AMDT_STATUS_OK == hResult);
+    // Assert that Uprof is working fine and to prevent crashes
+    bool assertStatus(AMDTResult hResult)
+    {
+        assert(AMDT_STATUS_OK == hResult);
+        return true;
+    }
 
-    return hResult;
+
+};
+
+int main()
+{
+    AMDTUInt32 smplInter;
+    std::cout << "Enter the desired sampleing interval: ";
+    std::cin >> smplInter;
+    UProfData test(smplInter);
+    system("cls");
+    test.startProf();
+    while (true)
+    {
+        
+        test.update();
+        
+    }
+    
+    test.stopProf();
+    system("pause");
+
+    return 0;
 }
