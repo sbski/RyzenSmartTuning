@@ -104,13 +104,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\AMD\AMDuProf\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenSmartTuning;C:\Program Files\AMD\AMDuProf\include;C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenAdj\lib</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\AMD\AMDuProf\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>AMDPowerProfileAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\AMD\AMDuProf\bin;C:\Windows\System32;C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenAdj\prebuilt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>AMDPowerProfileAPI.lib;WinRing0x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -153,10 +153,7 @@
     <ClCompile Include="RyzenSmartTuning.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\include\AMDProfileController.h" />
-    <ClInclude Include="..\..\..\include\AMDTDefinitions.h" />
-    <ClInclude Include="..\..\..\include\AMDTPowerProfileApi.h" />
-    <ClInclude Include="..\..\..\include\AMDTPowerProfileDataTypes.h" />
+    <ClInclude Include="UProfData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

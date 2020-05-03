@@ -1,2 +1,4 @@
 ﻿  RyzenSmartTuning.cpp
-  RyzenSmartTuning.vcxproj -> C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\x64\Debug\RyzenSmartTuning.exe
+RyzenSmartTuning.obj : error LNK2019: unresolved external symbol init_ryzenadj referenced in function main
+RyzenSmartTuning.obj : error LNK2019: unresolved external symbol set_stapm_limit referenced in function main
+C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\x64\Debug\RyzenSmartTuning.exe : fatal error LNK1120: 2 unresolved externals
