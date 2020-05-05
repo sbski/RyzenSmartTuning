@@ -32,9 +32,14 @@ struct RyzenSmartTuning
 	bool enableChangeDetection;
 	
 	//arrrays to hold required info
-	const std::string description[22] = {"STAPM Limit (mW)", "Fast Limit (Mw)", "Slow Limit (Mw)",  "Slow Time (S)",  "STAPM Time (S)",  "Tctl Temperature (Degrees C)",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  ""};
-	uint32_t settings[26];
-	bool enableSettings[26];
+	/*inline std::string description[22];{ "STAPM Limit (mW)", "Fast Limit (Mw)", "Slow Limit (Mw)",  "Slow Time (S)",
+	"STAPM Time (S)", "Tctl Temperature (Degrees C)", "VRM Current Limit (mA)", "VRM SoC Current Limit (mA)",
+		"VRM Maximum Current Limit (mA)", "VRM SoC Maximum Current Limit (mA)", "PSI0 Current Limit (mA)", "PSI0 SoC Current Limit(mA)",
+		"Maximum SoC Clock Frequency(MHz)", "Minimum SoC Clock Frequency(MHz)", "Maximum Transmission(CPU - GPU) Frequency(MHz)", "Minimum Transmission(CPU - GPU) Frequency(MHz)",
+		"Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "Maximum Data Launch Clock(Value)", "Minimum Data Launch Clock(Value)",
+		"Maximum GFX Clock(Value)", "Minimum GFX Clock(Value)"}*/
+	uint32_t settings[22];
+	bool enableSettings[22];
 
 	ryzen_access ryzenAccess;
 	
@@ -89,15 +94,54 @@ struct RyzenSmartTuning
 	uint32_t maxLclk;
 	uint32_t minLclk;
 
-
 	RyzenSmartTuning()
 	{
 		
 	}
 	RyzenSmartTuning(bool enableChangeDetection, AMDTUInt32 customSamplingInterval, bool startUProfNow)
 	{
-
+		uint32_t tempSettings[22];
+		for (int i = 0; i < 22; i++)
+		{
+			tempSettings[i] = 0;
+		}
+		RyzenSmartTuning(enableChangeDetection, customSamplingInterval, startUProfNow, tempSettings);
+	}
+	RyzenSmartTuning(bool enableChangeDetection, AMDTUInt32 customSamplingInterval, bool startUProfNow, uint32_t incomingSettings[22])
+	{
+		for (int i = 0; i < 22; i++)
+		{
+			settings[i] = incomingSettings[i];
+			std::cout << settings[i] << std::endl;
+		}
+		system("pause");
 		//Sleep(1000);
+
+		int oneWayToDoIt = 0;
+		stapmLimit = settings[oneWayToDoIt++];
+		fastLimit = settings[oneWayToDoIt++];
+		slowLimit = settings[oneWayToDoIt++];
+		slowTime = settings[oneWayToDoIt++];
+		stapmTime = settings[oneWayToDoIt++];
+		tctlTemp = settings[oneWayToDoIt++];
+		vrmCurrent = settings[oneWayToDoIt++];
+		vrmSocCurrent = settings[oneWayToDoIt++];
+		vrmMaxCurrent = settings[oneWayToDoIt++];
+		vrmSocMaxCurrent = settings[oneWayToDoIt++];
+		psi0Current = settings[oneWayToDoIt++];
+		psi0SocCurrent = settings[oneWayToDoIt++];
+		maxGfxClkFreq = settings[oneWayToDoIt++];
+		minGfxClkFreq = settings[oneWayToDoIt++];
+		maxSocClkFreq = settings[oneWayToDoIt++];
+		minSocClkFreq = settings[oneWayToDoIt++];
+		maxFclkFreq = settings[oneWayToDoIt++];
+		minFclkFreq = settings[oneWayToDoIt++];
+		maxVcn = settings[oneWayToDoIt++];
+		minVcn = settings[oneWayToDoIt++];
+		maxLclk = settings[oneWayToDoIt++];
+		minLclk = settings[oneWayToDoIt++];
+
+
 
 		samplingInterval = customSamplingInterval;
 
@@ -109,36 +153,10 @@ struct RyzenSmartTuning
 		{
 			startUProf();
 		}
+
 		//getting a valid update
 		Sleep(samplingInterval);
-		uProf.print(false);
-		stapmLimit = 28000;
-		fastLimit = 32000;
-		slowLimit = 30000;
-
-		std::cout << stapmLimit << std::endl;
-		std::cout << fastLimit << std::endl;
-		std::cout << slowLimit << std::endl;
-
-		slowTime = 0;
-		stapmTime = 0;
-		tctlTemp = 0;
-		vrmCurrent = 0;
-		vrmSocCurrent = 0;
-		vrmMaxCurrent = 0;
-		vrmSocMaxCurrent = 0;
-		psi0Current = 0;
-		psi0SocCurrent = 0;
-		maxGfxClkFreq = 0;
-		minGfxClkFreq = 0;
-		maxSocClkFreq = 0;
-		minSocClkFreq = 0;
-		maxFclkFreq = 0;
-		minFclkFreq = 0;
-		maxVcn = 0;
-		minVcn = 0;
-		maxLclk = 0;
-		minLclk = 0;
+		uProf.update();
 		
 		enableStapmLimit = stapmLimit != 0;
 		enableFastLimit = fastLimit != 0;

@@ -8,6 +8,7 @@
 #include <time.h>
 #include <string.h>
 #include <thread>
+#include <cstdint>
 #ifdef __linux__
 #include <unistd.h>
 #endif
@@ -27,11 +28,27 @@
 
 int main()
 {
-    
-    RyzenSmartTuning ryzenST(true, 100, true);
-    ryzenST.targetFastLimit = 32000;
-    ryzenST.targetSlowLimit= 30000;
-    ryzenST.targetStapmLimit = 28000;
+    fprintf(stdout, "Enter In 0 for any setting you do not want to be applied\n");
+    uint32_t userSettings[22];
+    uint32_t temp;
+    const char* description[22] = { "STAPM Limit (mW)", "Fast Limit (Mw)", "Slow Limit (Mw)",  "Slow Time (S)",
+    "STAPM Time (S)", "Tctl Temperature (Degrees C)", "VRM Current Limit (mA)", "VRM SoC Current Limit (mA)",
+        "VRM Maximum Current Limit (mA)", "VRM SoC Maximum Current Limit (mA)", "PSI0 Current Limit (mA)", "PSI0 SoC Current Limit(mA)",
+        "Maximum SoC Clock Frequency(MHz)", "Minimum SoC Clock Frequency(MHz)", "Maximum Transmission(CPU - GPU) Frequency(MHz)", "Minimum Transmission(CPU - GPU) Frequency(MHz)",
+        "Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "Maximum Data Launch Clock(Value)", "Minimum Data Launch Clock(Value)",
+        "Maximum GFX Clock(Value)", "Minimum GFX Clock(Value)" };
+    for (int i = 0; i < 22; i++)
+    {
+        fprintf(stdout, "Enter In %s: ", description[i]);
+        std::cin >> temp;
+        userSettings[i] = temp;
+    }
+    RyzenSmartTuning ryzenST(true, 100, true, userSettings);
+    system("cls");
+
+
+
+
     //ryzenST.startUProf();
     ryzenST.initRyzenAdj();
     if (ryzenST.ryzenAccess == NULL) {
