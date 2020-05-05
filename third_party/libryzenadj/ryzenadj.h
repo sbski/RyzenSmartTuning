@@ -8,6 +8,25 @@
 extern "C" {
 #endif
 
+#ifdef _LIBRYZENADJ_INTERNAL
+#include  "nb_smu_ops.h"
+
+#ifdef _WIN32
+#define EXP __declspec(dllexport)
+#define CALL __stdcall
+#else
+#define EXP __attribute__((visibility("default")))
+#define CALL
+#endif
+
+struct _ryzen_access {
+	nb_t nb;
+	pci_obj_t pci_obj;
+	smu_t mp1_smu;
+	smu_t psmu;
+};
+
+#else
 #ifdef _WIN32
 #define EXP __declspec(dllimport)
 #define CALL __stdcall
@@ -15,10 +34,13 @@ extern "C" {
 #define EXP
 #define CALL
 #endif
+struct _ryzen_access;
+#endif
 
-#define RYZENADJ_VER 5
+#define RYZENADJ_MAJOR_VER 0
+#define RYZENADJ_MINIOR_VER 6
 
-typedef void *ryzen_access;
+typedef struct _ryzen_access *ryzen_access;
 
 EXP ryzen_access CALL init_ryzenadj();
 

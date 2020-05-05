@@ -13,40 +13,38 @@
 #endif
 
 
+
+
 #include <AMDTPowerProfileApi.h>
 
 #include <ryzenadj.h>
 
-#include "UProfData.h"
+#include <UProfData.h>
+#include <RyzenSmartTuning.h>
 
 
 
 
 int main()
 {
-
-    AMDTUInt32 smplInter;
-    std::cout << "Enter the desired sampleing interval: ";
-    std::cin >> smplInter;
-    UProfData test(smplInter, false, false, true);
+    
+    RyzenSmartTuning ryzenST(true, 100, true);
+    ryzenST.targetFastLimit = 32000;
+    ryzenST.targetSlowLimit= 30000;
+    ryzenST.targetStapmLimit = 28000;
+    //ryzenST.startUProf();
+    ryzenST.initRyzenAdj();
+    if (ryzenST.ryzenAccess == NULL) {
+        printf("Unable to init ryzenadj, check permission\n");
+        system("pause");
+    }
+    ryzenST.startRST();
+    
+    /*
+    UProfData test;
     system("cls");
+    test.initalizeUProf(false, false, true);
     test.startProf();
-    test.update();
-    test.update();
-    test.update();
-    system("pause");
-    
-
-    uint32_t targetStapmLimit = 28000;
-    uint32_t targetFastLimit = 32000;
-    uint32_t targetSlowLimit = 30000;
-
-    ryzen_access ry;
-    ry = init_ryzenadj();
-    
-    set_fast_limit(ry, targetFastLimit);
-    set_slow_limit(ry, targetSlowLimit);
-    set_stapm_limit(ry, targetStapmLimit);
     
     while (true)
     {
@@ -54,6 +52,6 @@ int main()
     }
     test.stopProf();
     system("pause");
-
+    */
     return 0;
 }

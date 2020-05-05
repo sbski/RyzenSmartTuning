@@ -104,23 +104,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-<<<<<<< Updated upstream:Visual Sudio/RyzenSmartTuning/RyzenSmartTuning/RyzenSmartTuning.vcxproj
-      <AdditionalIncludeDirectories>C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenSmartTuning;C:\Program Files\AMD\AMDuProf\include;C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenAdj\lib</AdditionalIncludeDirectories>
-=======
-      <AdditionalIncludeDirectories>$(SolutionDir)\third_party\libryzenadj\;$(SolutionDir)\third_party\uprof\</AdditionalIncludeDirectories>
->>>>>>> Stashed changes:RyzenSmartTuning/RyzenSmartTuning.vcxproj
+      <AdditionalIncludeDirectories>$(SolutionDir)\third_party\libryzenadj\;$(SolutionDir)\third_party\uprof\;$(SolutionDir)\RyzenSmartTuning\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-<<<<<<< Updated upstream:Visual Sudio/RyzenSmartTuning/RyzenSmartTuning/RyzenSmartTuning.vcxproj
-      <AdditionalLibraryDirectories>C:\Program Files\AMD\AMDuProf\bin;C:\Windows\System32;C:\RyzenSmartTuning\Visual Sudio\RyzenSmartTuning\RyzenAdj\prebuilt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>AMDPowerProfileAPI.lib;WinRing0x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-=======
       <AdditionalLibraryDirectories>$(SolutionDir)\third_party\uprof\;$(SolutionDir)\third_party\libryzenadj\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>AMDPowerProfileAPI.lib;libryzenadj.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerbose</ShowProgress>
->>>>>>> Stashed changes:RyzenSmartTuning/RyzenSmartTuning.vcxproj
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -163,15 +154,12 @@
     <ClCompile Include="RyzenSmartTuning.cpp" />
   </ItemGroup>
   <ItemGroup>
-<<<<<<< Updated upstream:Visual Sudio/RyzenSmartTuning/RyzenSmartTuning/RyzenSmartTuning.vcxproj
-    <ClInclude Include="UProfData.h" />
-=======
     <ClInclude Include="resource.h" />
+    <ClInclude Include="RyzenSmartTuning.h" />
     <ClInclude Include="UProfData.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RyzenSmartTuning.rc" />
->>>>>>> Stashed changes:RyzenSmartTuning/RyzenSmartTuning.vcxproj
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
