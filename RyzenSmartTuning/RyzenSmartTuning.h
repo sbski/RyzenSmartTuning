@@ -112,9 +112,9 @@ struct RyzenSmartTuning
 		for (int i = 0; i < 22; i++)
 		{
 			settings[i] = incomingSettings[i];
-			std::cout << settings[i] << std::endl;
+			//std::cout << settings[i] << std::endl;
 		}
-		system("pause");
+		//system("pause");
 		//Sleep(1000);
 
 		int oneWayToDoIt = 0;

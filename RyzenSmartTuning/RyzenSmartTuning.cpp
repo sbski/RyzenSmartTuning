@@ -31,17 +31,29 @@ int main()
     fprintf(stdout, "Enter In 0 for any setting you do not want to be applied\n");
     uint32_t userSettings[22];
     uint32_t temp;
-    const char* description[22] = { "STAPM Limit (mW)", "Fast Limit (Mw)", "Slow Limit (Mw)",  "Slow Time (S)",
-    "STAPM Time (S)", "Tctl Temperature (Degrees C)", "VRM Current Limit (mA)", "VRM SoC Current Limit (mA)",
-        "VRM Maximum Current Limit (mA)", "VRM SoC Maximum Current Limit (mA)", "PSI0 Current Limit (mA)", "PSI0 SoC Current Limit(mA)",
-        "Maximum SoC Clock Frequency(MHz)", "Minimum SoC Clock Frequency(MHz)", "Maximum Transmission(CPU - GPU) Frequency(MHz)", "Minimum Transmission(CPU - GPU) Frequency(MHz)",
-        "Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "Maximum Data Launch Clock(Value)", "Minimum Data Launch Clock(Value)",
-        "Maximum GFX Clock(Value)", "Minimum GFX Clock(Value)" };
+    const char* description[22] = { "0. STAPM Limit (W)", "1. Fast Limit (W)", "2. Slow Limit (W)",  "3. Slow Time (S)",
+    "4. STAPM Time (S)", "5. Tctl Temperature (Degrees C)", "6. VRM Current Limit (A)", "7. VRM SoC Current Limit (mA)",
+        "8. VRM Maximum Current Limit (A)", "9. VRM SoC Maximum Current Limit (A)", "10. PSI0 Current Limit (mA)", "11. PSI0 SoC Current Limit(mA)",
+        "12. Maximum SoC Clock Frequency(MHz)", "13. Minimum SoC Clock Frequency(MHz)", "14. Maximum Transmission(CPU - GPU) Frequency(MHz)", "15. Minimum Transmission(CPU - GPU) Frequency(MHz)",
+        "16. Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "17. Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "18. Maximum Data Launch Clock(Value)", "19. Minimum Data Launch Clock(Value)",
+        "20. Maximum GFX Clock(Value)", "21. Minimum GFX Clock(Value)" };
     for (int i = 0; i < 22; i++)
     {
-        fprintf(stdout, "Enter In %s: ", description[i]);
-        std::cin >> temp;
-        userSettings[i] = temp;
+        if ((i < 9 || i > 19) && i != 3 && i != 4 && i != 6 && i != 7)
+        {
+        
+            fprintf(stdout, "Enter In %s: ", description[i]);
+            std::cin >> temp;
+            if (i == 0 || i == 1 || i == 2 || i == 6 || i == 7 || i == 8 || i == 9)
+            {
+                temp *= 1000;
+            }
+            userSettings[i] = temp;
+        }
+        else
+        {
+            userSettings[i] = 0;
+        }
     }
     RyzenSmartTuning ryzenST(true, 100, true, userSettings);
     system("cls");
