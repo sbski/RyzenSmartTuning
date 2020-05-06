@@ -43,6 +43,11 @@ struct RyzenSmartTuning
 
 	ryzen_access ryzenAccess;
 	
+	time_t now;
+	time_t lastApplication;
+	time_t timeSinceLastApplication;
+	int secondsSinceLastApplication;
+	int cooldownTime = 5;
 
 	//enable the application of settings
 	bool enableStapmLimit;
@@ -96,10 +101,11 @@ struct RyzenSmartTuning
 
 	RyzenSmartTuning()
 	{
-		
+		//so we don't get a false start on uProf and RyzenAdj this is blank. uProf is angrier than an Intel shill when you bring up AMD. So please, try not to make it mad.
 	}
 	RyzenSmartTuning(bool enableChangeDetection, AMDTUInt32 customSamplingInterval, bool startUProfNow)
 	{
+		// Setting all settings to 0 if none are provided.
 		uint32_t tempSettings[22];
 		for (int i = 0; i < 22; i++)
 		{
@@ -109,14 +115,18 @@ struct RyzenSmartTuning
 	}
 	RyzenSmartTuning(bool enableChangeDetection, AMDTUInt32 customSamplingInterval, bool startUProfNow, uint32_t incomingSettings[22])
 	{
+		//setting the time of last applicaion to now.
+		time(&now);
+		lastApplication = now;
+		
+		
+		//storing the incomingSettings into the local settings
 		for (int i = 0; i < 22; i++)
 		{
 			settings[i] = incomingSettings[i];
-			//std::cout << settings[i] << std::endl;
 		}
-		//system("pause");
-		//Sleep(1000);
 
+		// I mean It is efficent in terms of getting the array into the individual variables.
 		int oneWayToDoIt = 0;
 		stapmLimit = settings[oneWayToDoIt++];
 		fastLimit = settings[oneWayToDoIt++];
@@ -158,6 +168,7 @@ struct RyzenSmartTuning
 		Sleep(samplingInterval);
 		uProf.update();
 		
+		//setting the enablers based on if I was moddified
 		enableStapmLimit = stapmLimit != 0;
 		enableFastLimit = fastLimit != 0;
 		enableSlowLimit = slowLimit != 0;
@@ -182,25 +193,29 @@ struct RyzenSmartTuning
 		enableMinLclk = minLclk != 0;
 	}
 
+	// passes off initalizing ryzenAdj
 	bool initRyzenAdj()
 	{
 		//cleanup_ryzenadj(ryzenAccess);
 		ryzenAccess = init_ryzenadj();
 		return true;
 	}
+
+	//
 	bool changeSettings()
 	{
 
 	}
 
+	//really usefull stuff here
 	void print()
 	{
 		uProf.print();
 	}
 
+	// detects if settings have been changed. Must have a successfull print()/update() before it can be used
 	bool settingsChanged()
 	{
-		//uProf.print(false);
 		if (round(uProf.lastFastLimit) * 1000 != fastLimit)
 		{
 			return true;
@@ -221,132 +236,152 @@ struct RyzenSmartTuning
 
 	bool applySettings()
 	{
-		//pretty straight forward. If the setting has a value other than 0, it applies the setting.
-		if (enableStapmLimit)
+		//calculates the time since last application
+		time(&now);
+		timeSinceLastApplication = difftime(now, lastApplication);
+		secondsSinceLastApplication = int(timeSinceLastApplication);
+		
+		if (secondsSinceLastApplication >= cooldownTime)
 		{
-			set_stapm_limit(ryzenAccess, stapmLimit);
-			Sleep(50);
+			// If the setting has been enabled, it applies the setting.
+			if (enableStapmLimit)
+			{
+				set_stapm_limit(ryzenAccess, stapmLimit);
+				Sleep(50);
+			}
+			if (enableFastLimit)
+			{
+				set_fast_limit(ryzenAccess, fastLimit);
+				Sleep(50);
+			}
+			if (enableSlowLimit)
+			{
+				set_slow_limit(ryzenAccess, slowLimit);
+				Sleep(50);
+			}
+			if (enableSlowTime)
+			{
+				set_slow_time(ryzenAccess, slowTime);
+				Sleep(50);
+			}
+			if (enableStapmTime)
+			{
+				set_stapm_time(ryzenAccess, stapmTime);
+				Sleep(50);
+			}
+			if (enableTctlTemp)
+			{
+				set_tctl_temp(ryzenAccess, tctlTemp);
+				Sleep(50);
+			}
+			if (enableVrmCurrent)
+			{
+				set_vrm_current(ryzenAccess, vrmCurrent);
+				Sleep(50);
+			}
+			if (enableVrmSocCurrent)
+			{
+				set_vrmsoc_current(ryzenAccess, vrmSocCurrent);
+				Sleep(50);
+			}
+			if (enableVrmMaxCurrent)
+			{
+				set_vrmmax_current(ryzenAccess, vrmMaxCurrent);
+				Sleep(50);
+			}
+			if (enableVrmSocMaxCurrent)
+			{
+				set_vrmsocmax_current(ryzenAccess, vrmSocMaxCurrent);
+				Sleep(50);
+			}
+			if (enablePsi0Current)
+			{
+				set_psi0_current(ryzenAccess, psi0Current);
+				Sleep(50);
+			}
+			if (enablePsi0SocCurrent)
+			{
+				set_psi0soc_current(ryzenAccess, psi0SocCurrent);
+				Sleep(50);
+			}
+			if (enableMaxGfxClkFreq)
+			{
+				set_max_gfxclk_freq(ryzenAccess, maxGfxClkFreq);
+				Sleep(50);
+			}
+			if (enableMinGfxClkFreq)
+			{
+				set_min_gfxclk_freq(ryzenAccess, minGfxClkFreq);
+				Sleep(50);
+			}
+			if (enableMaxSocClkFreq)
+			{
+				set_max_socclk_freq(ryzenAccess, maxSocClkFreq);
+				Sleep(50);
+			}
+			if (enableMinSocClkFreq)
+			{
+				set_min_socclk_freq(ryzenAccess, minSocClkFreq);
+				Sleep(50);
+			}
+			if (enableMaxFclkFreq)
+			{
+				set_max_fclk_freq(ryzenAccess, maxFclkFreq);
+				Sleep(50);
+			}
+			if (enableMinFclkFreq)
+			{
+				set_min_fclk_freq(ryzenAccess, minFclkFreq);
+				Sleep(50);
+			}
+			if (enableMaxVcn)
+			{
+				set_max_vcn(ryzenAccess, maxVcn);
+				Sleep(50);
+			}
+			if (enableMinVcn)
+			{
+				set_min_vcn(ryzenAccess, minVcn);
+				Sleep(50);
+			}
+			if (enableMaxLclk)
+			{
+				set_max_lclk(ryzenAccess, maxLclk);
+				Sleep(50);
+			}
+			if (enableMinLclk)
+			{
+				set_min_lclk(ryzenAccess, minLclk);
+				Sleep(50);
+			}
+			std::cout << "Applied Settings!\n";
+			//Sleep(1000);
+
+			//resetting the time of lastApplication to now
+			time(&now);
+			lastApplication = now;
 		}
-		if (enableFastLimit)
+		else
 		{
-			set_fast_limit(ryzenAccess, fastLimit);
-			Sleep(50);
+			fprintf(stdout, "%i seconds untill next aplication can happen.\n", (cooldownTime-secondsSinceLastApplication));
 		}
-		if (enableSlowLimit)
-		{
-			set_slow_limit(ryzenAccess, slowLimit);
-			Sleep(50);
-		}
-		if(enableSlowTime)
-		{
-			set_slow_time(ryzenAccess, slowTime);
-			Sleep(50);
-		}
-		if(enableStapmTime)
-		{
-			set_stapm_time(ryzenAccess, stapmTime);
-			Sleep(50);
-		}
-		if(enableTctlTemp)
-		{
-			set_tctl_temp(ryzenAccess, tctlTemp); 
-			Sleep(50);
-		}
-		if(enableVrmCurrent)
-		{
-			set_vrm_current(ryzenAccess, vrmCurrent);
-			Sleep(50);
-		}
-		if(enableVrmSocCurrent)
-		{
-			set_vrmsoc_current(ryzenAccess, vrmSocCurrent);
-			Sleep(50);
-		}
-		if(enableVrmMaxCurrent)
-		{
-			set_vrmmax_current(ryzenAccess, vrmMaxCurrent);
-			Sleep(50);
-		}
-		if(enableVrmSocMaxCurrent)
-		{
-			set_vrmsocmax_current(ryzenAccess, vrmSocMaxCurrent);
-			Sleep(50);
-		}
-		if(enablePsi0Current)
-		{
-			set_psi0_current(ryzenAccess, psi0Current);
-			Sleep(50);
-		}
-		if(enablePsi0SocCurrent)
-		{
-			set_psi0soc_current(ryzenAccess, psi0SocCurrent);
-			Sleep(50);
-		}
-		if(enableMaxGfxClkFreq)
-		{
-			set_max_gfxclk_freq(ryzenAccess, maxGfxClkFreq);
-			Sleep(50);
-		}
-		if(enableMinGfxClkFreq)
-		{
-			set_min_gfxclk_freq(ryzenAccess, minGfxClkFreq);
-			Sleep(50);
-		}
-		if(enableMaxSocClkFreq)
-		{
-			set_max_socclk_freq(ryzenAccess, maxSocClkFreq);
-			Sleep(50);
-		}
-		if(enableMinSocClkFreq)
-		{
-			set_min_socclk_freq(ryzenAccess, minSocClkFreq);
-			Sleep(50);
-		}
-		if (enableMaxFclkFreq)
-		{
-			set_max_fclk_freq(ryzenAccess, maxFclkFreq);
-			Sleep(50);
-		}
-		if(enableMinFclkFreq)
-		{
-			set_min_fclk_freq(ryzenAccess, minFclkFreq);
-			Sleep(50);
-		}
-		if (enableMaxVcn)
-		{
-			set_max_vcn(ryzenAccess, maxVcn);
-			Sleep(50);
-		}
-		if(enableMinVcn)
-		{
-			set_min_vcn(ryzenAccess, minVcn);
-			Sleep(50);
-		}
-		if (enableMaxLclk)
-		{
-			set_max_lclk(ryzenAccess, maxLclk);
-			Sleep(50);
-		}
-		if (enableMinLclk)
-		{
-			set_min_lclk(ryzenAccess, minLclk);
-			Sleep(50);
-		}
-		std::cout << "Applied Settings!\n";
-		Sleep(1000);
 		return true;
 	}
 
+	//function to pass off starts to uProf
 	bool startUProf()
 	{
 		return uProf.startProf();
 	}
 
+	//method to pass off stops to uProf
 	bool stopUProf()
 	{
 		return uProf.stopProf();
 	}
 
+
+	//starts Ryzen Smart Tuning. WIP sitll
 	void startRST()
 	{
 		while (true)
@@ -354,8 +389,10 @@ struct RyzenSmartTuning
 			print();
 			if (settingsChanged())
 			{
+
 				applySettings();
 			}
 		}
 	}
 };
+

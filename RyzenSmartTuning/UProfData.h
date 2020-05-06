@@ -43,9 +43,10 @@ public:
     float lastFastLimit;
     float lastSlowLimit;
 
+    //prevents false starts on uProf
     UProfData()
     {
-        //UProfData(100);
+        // Pringles aren't actually potato chips. Kinda like how this is actually not a constuctor, but a strategy for not triggering uProf. Don't trigger the uProf... It has drivers made by AMD after all.
     }
 
     UProfData(AMDTUInt32 setInterval)
@@ -81,23 +82,27 @@ public:
         return 0;
     }
 
+
+
+    //update() is really just a print(false)
     bool update()
     {
         return (print(false));
     }
 
+    //pass a true to print(bool)
     bool print()
     {
         return print(true);
     }
 
+    //bool tells print if it's an update or not
     bool print(bool notUpdate)
     {
 
         //do while loop for the ability to break out if needed
         do
         {
-            //std::cout << "in loop: " << "\n";
             // sleep for refresh duration - at least equivalent to the sampling interval specified
 #if defined ( WIN32 )
         // Windows
@@ -190,7 +195,7 @@ public:
 
     bool initializeUProf(bool readPState, bool readCorePower, bool readFrequency)
     {
-        //try to initialize online mode
+        //try to initialize online mode and try to catch exceptions (it doesn't work in reality, IDK why)
         try
         {
             hResult = AMDTPwrProfileInitialize(AMDT_PWR_MODE_TIMELINE_ONLINE);
@@ -206,15 +211,15 @@ public:
 
         // passing off the sapling interval
         hResult = AMDTPwrSetTimerSamplingPeriod(100);
-        //std::cout << hResult << "\n";
+
         //assert(AMDT_STATUS_OK == hResult);
 
 
-        //system("pause");
+        //Temperary CounterDesc to get the description of the variables that we will need to test.
         AMDTPwrCounterDesc tempDesc;
         // Grabbing the IDs of important counters
         hResult = AMDTPwrGetCounterId(AMD_PWR_SOCKET_POWER, &socketPowerId);
-        assert(AMDT_STATUS_OK == hResult);
+        assert(AMDT_STATUS_OK == hResult);//you know the drill by now... I am starting to thing this damn API doesn't like running
         //grabbing the description of important counters
         hResult = AMDTPwrGetCounterDesc(socketPowerId, &tempDesc);
         assert(AMDT_STATUS_OK == hResult);
@@ -222,6 +227,8 @@ public:
         socketPowerDesc = tempDesc.m_name;
         //fprintf(stdout, "%s\n", tempDesc.m_name);
 
+
+        //same for STAPM Limit
         hResult = AMDTPwrGetCounterId(AMD_PWR_SOCKET_STAPM_LIMIT, &stapmLimitId);
         assert(AMDT_STATUS_OK == hResult);
         hResult = AMDTPwrGetCounterDesc(stapmLimitId, &tempDesc);
@@ -229,19 +236,19 @@ public:
         stapmLimitDesc = tempDesc.m_name;
         //fprintf(stdout, "%s\n", tempDesc.m_name);
 
+        //same for Fast Limit
         hResult = AMDTPwrGetCounterId(AMD_PWR_SOCKET_PPT_FAST_LIMIT, &fastLimitId);
         assert(AMDT_STATUS_OK == hResult);
         hResult = AMDTPwrGetCounterDesc(fastLimitId, &tempDesc);
         assert(AMDT_STATUS_OK == hResult);
         fastLimitDesc = tempDesc.m_name;
-        //fprintf(stdout, "%s\n", tempDesc.m_name);
-
+        
+        //same for Slow Limit
         hResult = AMDTPwrGetCounterId(AMD_PWR_SOCKET_PPT_SLOW_LIMIT, &slowLimitId);
         assert(AMDT_STATUS_OK == hResult);
         hResult = AMDTPwrGetCounterDesc(slowLimitId, &tempDesc);
         assert(AMDT_STATUS_OK == hResult);
         slowLimitDesc = tempDesc.m_name;
-        //fprintf(stdout, "%s\n", tempDesc.m_name);
 
         //get the number of counters
         hResult = AMDTPwrGetSupportedCounters(&nbrCounters, &pCounters);
@@ -251,7 +258,7 @@ public:
         //setting the pointer of pCurrCounter
         pCurrCounter = pCounters;
 
-
+        //set the number of samples to 0
         AMDTUInt32 nbrSamples = 0;
 
 
@@ -265,22 +272,25 @@ public:
                 //to get the counter Desc
                 AMDTPwrCounterDesc counterDesc;
 
+                //getting the description of the current counter ID so that we can disable it based on name
                 AMDTPwrGetCounterDesc(pCurrCounter->m_counterID, &counterDesc);
                 std::string currName = counterDesc.m_name;
 
+                //temperary bools to improve readability
                 bool isPState = currName.find("P-State") != std::string::npos;
                 bool isCorePower = currName.find("Core") != std::string::npos && currName.find("Power") != std::string::npos;
                 bool isFrequency = currName.find(" Effective Frequency") != std::string::npos;
 
+                // Check to see if we want to enable the counter or not
                 if ((isPState && !readPState) || (isCorePower && !readCorePower) || (isFrequency && !readFrequency))
                 {
-                    //these are not the counters you are looking for
+                    // These are not the counters that you are looking for
                 }
                 else
                 {
-                    // Enable all the counters
+                    // Enable all the counter
                     hResult = AMDTPwrEnableCounter(pCurrCounter->m_counterID);
-                    // Assert that the counter enabled properly
+                    // Assert that the counter enabled properly (or that it was already enabled)
                     assert(AMDT_STATUS_OK == hResult || AMDT_ERROR_COUNTER_ALREADY_ENABLED == hResult);
 
                 }
@@ -289,7 +299,7 @@ public:
         return true;
     }
 
-
+    // Start uProf (and verify that it did)
     bool startProf()
     {
         hResult = AMDTPwrStartProfiling();
@@ -310,3 +320,5 @@ public:
 
     
 };
+
+// You're still here? It's over. Go home. Go!
