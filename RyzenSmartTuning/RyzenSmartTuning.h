@@ -1,6 +1,8 @@
 #pragma once
 
 
+
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +40,8 @@ struct RyzenSmartTuning
 		"Maximum SoC Clock Frequency(MHz)", "Minimum SoC Clock Frequency(MHz)", "Maximum Transmission(CPU - GPU) Frequency(MHz)", "Minimum Transmission(CPU - GPU) Frequency(MHz)",
 		"Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "Maximum Data Launch Clock(Value)", "Minimum Data Launch Clock(Value)",
 		"Maximum GFX Clock(Value)", "Minimum GFX Clock(Value)"}*/
-	uint32_t settings[22];
-	bool enableSettings[22];
+	uint32_t settings[23];
+	bool enableSettings[23];
 
 	ryzen_access ryzenAccess;
 	
@@ -72,6 +74,8 @@ struct RyzenSmartTuning
 	bool enableMinVcn;
 	bool enableMaxLclk;
 	bool enableMinLclk;
+
+	bool enableLog;
 
 	
 
@@ -106,7 +110,7 @@ struct RyzenSmartTuning
 	RyzenSmartTuning(bool enableChangeDetection, AMDTUInt32 customSamplingInterval, bool startUProfNow)
 	{
 		// Setting all settings to 0 if none are provided.
-		uint32_t tempSettings[22];
+		uint32_t tempSettings[23];
 		for (int i = 0; i < 22; i++)
 		{
 			tempSettings[i] = 0;
@@ -121,7 +125,7 @@ struct RyzenSmartTuning
 		
 		
 		//storing the incomingSettings into the local settings
-		for (int i = 0; i < 22; i++)
+		for (int i = 0; i < 23; i++)
 		{
 			settings[i] = incomingSettings[i];
 		}
@@ -152,10 +156,14 @@ struct RyzenSmartTuning
 		minLclk = settings[oneWayToDoIt++];
 
 
+		//to enable and disable logging
+		enableLog = settings[oneWayToDoIt++] == 1;
+
+
 
 		samplingInterval = customSamplingInterval;
 
-		uProf = UProfData(customSamplingInterval);
+		uProf = UProfData(customSamplingInterval, enableLog);
 
 		uProf.initializeUProf(false,true,true);
 		

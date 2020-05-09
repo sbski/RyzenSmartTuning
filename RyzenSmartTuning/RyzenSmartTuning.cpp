@@ -35,7 +35,9 @@ int main()
     ifstream inputSettingsFile;
     ofstream createSettingsFile;
     
-    uint32_t userSettings[22];
+    AMDTUInt32 customSamplingInterval = 100;
+
+    uint32_t userSettings[23];
     uint32_t temp;
     //opening out setttings file
     inputSettingsFile.open("settings.txt");
@@ -43,15 +45,29 @@ int main()
     if (inputSettingsFile.is_open())
     {
         //reading in file into userSettings if it exists
-        for (int i = 0; i < 22; i++)
+        for (int i = 0; i < 24; i++)
         {
-            getline(inputSettingsFile, currentSetting);
-            std::string::size_type sz;   // alias of size_t
-            temp = std::stoi(currentSetting, &sz);
+            if (i != 23)
+            {
+                getline(inputSettingsFile, currentSetting);
+                std::string::size_type sz;   // alias of size_t
+                temp = std::stoi(currentSetting, &sz);
 
-            //std::cout << currentSetting << std::endl;
-            std::cout << "Loaded: " << temp << std::endl;
-            userSettings[i] = temp;
+                //std::cout << currentSetting << std::endl;
+                std::cout << "Loaded: " << temp << std::endl;
+                userSettings[i] = temp;
+            }
+            else
+            {
+                getline(inputSettingsFile, currentSetting);
+                std::string::size_type sz;   // alias of size_t
+                temp = std::stoi(currentSetting, &sz);
+
+                //std::cout << currentSetting << std::endl;
+                std::cout << "Loaded: " << temp << std::endl;
+                customSamplingInterval = temp;
+            }
+            
         }
 
 
@@ -74,14 +90,14 @@ int main()
         //user input
         fprintf(stdout, "Enter In 0 for any setting you do not want to be applied\n");
         //all of the descriptions here with the index of where they go when the go off to RST
-        const char* description[22] = { "0. STAPM Limit (W)", "1. Fast Limit (W)", "2. Slow Limit (W)",  "3. Slow Time (Package Power Tracking (PPT) - Slow period) (S)",
+        const char* description[24] = {"0. STAPM Limit (W)", "1. Fast Limit (W)", "2. Slow Limit (W)",  "3. Slow Time (Package Power Tracking (PPT) - Slow period) (S)",
         "4. STAPM Time (CPU Boost Period) (S)", "5. Tctl Temperature (Degrees C)", "6. VRM Current Limit (A)", "7. VRM SoC Current Limit (mA)",
             "8. VRM Maximum Current Limit (A)", "9. VRM SoC Maximum Current Limit (A)", "10. PSI0 Current Limit (mA)", "11. PSI0 SoC Current Limit(mA)",
             "12. Maximum SoC Clock Frequency(MHz)", "13. Minimum SoC Clock Frequency(MHz)", "14. Maximum Transmission(Infinity Fabric) Frequency(MHz)", "15. Minimum Transmission(Infinity Fabric) Frequency(MHz)",
             "16. Maximum Video Core Next(VCE - Video Coding Engine) (Value)", "17. Minimum Video Core Next(VCE - Video Coding Engine) (Value)", "18. Maximum Data Launch Clock(Value)", "19. Minimum Data Launch Clock(Value)",
-            "20. Maximum GFX Clock(Value)", "21. Minimum GFX Clock(Value)" };
+            "20. Maximum GFX Clock(Value)", "21. Minimum GFX Clock(Value)", "Enable log (0: No, 1: Yes)", "sampling interval"};
         //removing extra options for now
-        for (int i = 0; i < 22; i++)
+        for (int i = 0; i < 24; i++)
         {
             if (((i < 9 || i > 19   ) && i != 3 && i != 6 && i != 7) || i == 10 || i == 14 || i == 15)
             {
@@ -95,7 +111,15 @@ int main()
                 {
                     temp *= 1000;
                 }
-                userSettings[i] = temp;
+                if (i != 23)
+                {
+                    userSettings[i] = temp;
+                }
+                else
+                {
+                    customSamplingInterval = temp;
+                }
+                
 
                 stringstream ss;
                 ss << temp;
@@ -120,8 +144,13 @@ int main()
     
     //std::system("pause");
     
+    if (customSamplingInterval < 50)
+    {
+        customSamplingInterval = 50;
+    }
+
     //sending all the data off to RST
-    RyzenSmartTuning ryzenST(true, 200, true, userSettings);
+    RyzenSmartTuning ryzenST(true, customSamplingInterval, true, userSettings);
     std::system("cls");
 
 

@@ -1,12 +1,29 @@
 #pragma once
 
+//Imports needed for logging
+#include <fstream>
+#include<sstream> 
+using namespace std;
 
+#include <time.h>
+
+//imports needed for uProf
 #include <AMDTPowerProfileApi.h>
 #include <assert.h>
 
 
 class UProfData
 {
+    //creation of log
+    ofstream outputLog;
+    time_t now;
+
+    std::string logName;
+    
+
+    bool enableLog;
+    bool firstPrint;
+
     //-------------------------- Other data --------------------------
     AMDTUInt32 threadCount;
 
@@ -49,8 +66,10 @@ public:
         // Pringles aren't actually potato chips. Kinda like how this is actually not a constuctor, but a strategy for not triggering uProf. Don't trigger the uProf... It has drivers made by AMD after all.
     }
 
-    UProfData(AMDTUInt32 setInterval)
+    UProfData(AMDTUInt32 setInterval, bool incomingEnableLog)
     {
+        firstPrint = 1;
+        enableLog = incomingEnableLog;
         nbrSamples = 0;
         pSampleData = nullptr;
 
@@ -64,7 +83,7 @@ public:
         samplingInterval = setInterval;
         nbrSamples = 0;
 
-        initializeUProf(true, true, true);
+        //don't initalize uprof
     }
 
     AMDTUInt32 getStapmLimit()
@@ -81,24 +100,34 @@ public:
     {
         return 0;
     }
-
+    
 
 
     //update() is really just a print(false)
     bool update()
     {
-        return (print(false));
+        return (print(false, true));
     }
 
     //pass a true to print(bool)
     bool print()
     {
-        return print(true);
+        return print(true, true);
+    }
+    bool print(bool notUpdate)
+    {
+        return print(notUpdate, true);
     }
 
     //bool tells print if it's an update or not
-    bool print(bool notUpdate)
+    bool print(bool notUpdate, bool printLog)
     {
+        if (enableLog && !firstPrint)
+        {
+            outputLog << '\n';
+            //flush to sync the file
+            outputLog.flush();
+        }
 
         //do while loop for the ability to break out if needed
         do
@@ -172,15 +201,32 @@ public:
                             
                             //combining an update function and the print funciton as one
                             if (notUpdate)
-                                fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[nbrSamples - 1].m_counterValues->m_data);
+                                fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[idx].m_counterValues->m_data);
+                            if (enableLog)
+                            {
+                                if (firstPrint)
+                                {
+                                    outputLog << counterDesc.m_name << ',';
+                                    //fprintf(stdout, "logged: %f\n", pSampleData[idx].m_counterValues->m_data);
+                                }
+                                else
+                                {
+                                    outputLog << pSampleData[idx].m_counterValues->m_data << ',';
+                                }
+                                
+                                //fprintf(stdout, "logged: %f\n", pSampleData[idx].m_counterValues->m_data);
+                            }
+                            
 
                             pSampleData[idx].m_counterValues++;
                         }
+                        
+                        
                     } // iterate over the sampled counters
                 }
-
             }
         } while (false);
+        firstPrint = false;
         return true;
 
     }
@@ -195,6 +241,20 @@ public:
 
     bool initializeUProf(bool readPState, bool readCorePower, bool readFrequency)
     {
+        //create log file if enabled
+        if (enableLog)
+        {
+            stringstream ss;
+            string temp;
+            time(&now);
+            ss << now;
+            ss >> temp;
+            temp += ".csv";
+            temp = "log" + temp;
+            
+            outputLog.open(temp);
+            logName = temp;
+        }
         //try to initialize online mode and try to catch exceptions (it doesn't work in reality, IDK why)
         try
         {
@@ -207,6 +267,7 @@ public:
         }
         //assert that it does
         assert(AMDT_STATUS_OK == hResult);
+
 
 
         // passing off the sapling interval
@@ -261,6 +322,7 @@ public:
         //set the number of samples to 0
         AMDTUInt32 nbrSamples = 0;
 
+        //create output file.
 
 
         //enable counters
@@ -292,10 +354,10 @@ public:
                     hResult = AMDTPwrEnableCounter(pCurrCounter->m_counterID);
                     // Assert that the counter enabled properly (or that it was already enabled)
                     assert(AMDT_STATUS_OK == hResult || AMDT_ERROR_COUNTER_ALREADY_ENABLED == hResult);
-
                 }
             }
         }
+        
         return true;
     }
 
