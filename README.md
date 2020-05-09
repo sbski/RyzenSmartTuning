@@ -3,4 +3,4 @@ A utility for making Ryzen mobile APUs run faster. We are currently looking at t
 
 You can install uProf here: https://developer.amd.com/amd-uprof/
 
-If you want to apply your own settings, Right now you will need FlyGoat's amazing RyzenAdj found here: https://github.com/FlyGoat/RyzenAdj
+Huge shoutout to FlyGoat for his help on this project and for RyzenAdj. You can check out RyzenAdj here: https://github.com/FlyGoat/RyzenAdj
