@@ -37,35 +37,59 @@ int main()
     
     AMDTUInt32 customSamplingInterval = 100;
 
-    uint32_t userSettings[23];
+    uint32_t userSettings[22];
     uint32_t temp;
     //opening out setttings file
     inputSettingsFile.open("settings.txt");
 
+    int userSettingsSize = *(&userSettings + 1) - userSettings;
+    int totalUserOptions = 24;
+
+    bool enableLog;
+
     if (inputSettingsFile.is_open())
     {
+        int i = 0;
+        std::cout << userSettingsSize << "\n";
         //reading in file into userSettings if it exists
-        for (int i = 0; i < 24; i++)
+        for (int i = 0; i < totalUserOptions; i++)
         {
-            if (i != 23)
+            std::cout << i << "| ";
+            if (i < 22)
             {
                 getline(inputSettingsFile, currentSetting);
                 std::string::size_type sz;   // alias of size_t
                 temp = std::stoi(currentSetting, &sz);
 
                 //std::cout << currentSetting << std::endl;
-                std::cout << "Loaded: " << temp << std::endl;
+                std::cout << "Loaded RyzenAdj: " << temp << std::endl;
                 userSettings[i] = temp;
             }
             else
             {
-                getline(inputSettingsFile, currentSetting);
-                std::string::size_type sz;   // alias of size_t
-                temp = std::stoi(currentSetting, &sz);
+                switch (i)
+                {
+                case 22:
+                    getline(inputSettingsFile, currentSetting);
+                    std::string::size_type sz;   // alias of size_t
+                    temp = std::stoi(currentSetting, &sz);
 
-                //std::cout << currentSetting << std::endl;
-                std::cout << "Loaded: " << temp << std::endl;
-                customSamplingInterval = temp;
+                    //std::cout << currentSetting << std::endl;
+                    std::cout << "Loaded enableLog: " << temp << std::endl;
+                    enableLog = (temp == 1);
+                    break;
+                case 23:
+                    getline(inputSettingsFile, currentSetting);
+                    temp = std::stoi(currentSetting, &sz);
+
+                    //std::cout << currentSetting << std::endl;
+                    std::cout << "Loaded customSamplingInterval: " << temp << std::endl;
+                    customSamplingInterval = temp;
+                    //system("pause");
+                    break;
+                }
+
+               
             }
             
         }
@@ -144,13 +168,13 @@ int main()
     
     //std::system("pause");
     
-    if (customSamplingInterval < 50)
+    if (customSamplingInterval < 10)
     {
-        customSamplingInterval = 50;
+        customSamplingInterval = 10;
     }
 
     //sending all the data off to RST
-    RyzenSmartTuning ryzenST(true, customSamplingInterval, true, userSettings);
+    RyzenSmartTuning ryzenST(true, customSamplingInterval, true, userSettings, enableLog);
     std::system("cls");
 
 

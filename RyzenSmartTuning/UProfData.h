@@ -1,10 +1,14 @@
 #pragma once
+#ifndef _UPROFDATA_H_
+#define _UPROFDATA_H_
 
 //Imports needed for logging
 #include <fstream>
 #include<sstream> 
 using namespace std;
 
+#include <iostream>
+#include <thread>
 #include <time.h>
 
 //imports needed for uProf
@@ -23,6 +27,7 @@ class UProfData
 
     bool enableLog;
     bool firstPrint;
+    bool didFirstPrint;
 
     //-------------------------- Other data --------------------------
     AMDTUInt32 threadCount;
@@ -68,7 +73,9 @@ public:
 
     UProfData(AMDTUInt32 setInterval, bool incomingEnableLog)
     {
-        firstPrint = 1;
+        firstPrint = true;
+        didFirstPrint = false;
+
         enableLog = incomingEnableLog;
         nbrSamples = 0;
         pSampleData = nullptr;
@@ -86,20 +93,7 @@ public:
         //don't initalize uprof
     }
 
-    AMDTUInt32 getStapmLimit()
-    {
-        return 0;
-    }
-
-    AMDTUInt32 getFastLimit()
-    {
-        return 0;
-    }
-
-    AMDTUInt32 getSlowLimit()
-    {
-        return 0;
-    }
+    
     
 
 
@@ -122,12 +116,7 @@ public:
     //bool tells print if it's an update or not
     bool print(bool notUpdate, bool printLog)
     {
-        if (enableLog && !firstPrint)
-        {
-            outputLog << '\n';
-            //flush to sync the file
-            outputLog.flush();
-        }
+        
 
         //do while loop for the ability to break out if needed
         do
@@ -135,7 +124,15 @@ public:
             // sleep for refresh duration - at least equivalent to the sampling interval specified
 #if defined ( WIN32 )
         // Windows
-            Sleep(samplingInterval);
+            if (samplingInterval < 50)
+            {
+                Sleep(50);
+
+            }
+            else
+            {
+                Sleep(samplingInterval);
+            }
 #else
         // Linux
             usleep(samplingInterval * 1000);
@@ -148,20 +145,35 @@ public:
 
             if (AMDT_STATUS_OK != hResult)
             {
-                return false;
+                //Retries to read the data if it fails
                 continue;
                 
-            }
-            if (notUpdate)
-            {
-                system("cls");
             }
             //std::cout << nbrSamples << "\n";
             if (nullptr != pSampleData)
             {
                 // iterate over all the samples and report the sampled counter values
-                for (AMDTUInt32 idx = nbrSamples - 1; idx < nbrSamples; idx++)
+                for (AMDTUInt32 idx = 0; idx < nbrSamples; idx++)
                 {
+                    if (notUpdate && idx == nbrSamples - 1)
+                    {
+                        system("cls");
+                        std::cout << nbrSamples << std::endl;
+                    }
+                    if (didFirstPrint)
+                    {
+                        firstPrint = false;
+                    }
+                    if (enableLog && !firstPrint)
+                    {
+                        while (!outputLog.is_open())
+                        {
+                            outputLog.open(logName);
+                        }
+                        outputLog << '\n';
+                        outputLog.flush();
+                    }
+                    
                     //std::cout << "idx =" << idx <<"\n";
                     //system("pause");
                     // Iterate over the sampled counter values and print
@@ -169,6 +181,7 @@ public:
                     {
                         if (nullptr != pSampleData[idx].m_counterValues)
                         {
+                            
                             // Get the counter descriptor to print the counter name
                             AMDTPwrCounterDesc counterDesc;
                             hResult = AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
@@ -177,57 +190,183 @@ public:
                             if (socketPowerDesc.find(temp) != std::string::npos)
                             {
                                 lastSocketPower = pSampleData[idx].m_counterValues->m_data;
-                                //std::cout << lastSocketPower << "\n";
-
                             }
                             else if (stapmLimitDesc.find(temp) != std::string::npos)
                             {
                                 lastStapmLimit = pSampleData[idx].m_counterValues->m_data;
-                                //std::cout << lastSlowLimit << "\n";
-
                             }
                             else if (fastLimitDesc.find(temp) != std::string::npos)
                             {
                                 lastFastLimit = pSampleData[idx].m_counterValues->m_data;
-                                //std::cout << lastSlowLimit << "\n";
-
                             }
                             else if (slowLimitDesc.find(temp) != std::string::npos)
                             {
                                 lastSlowLimit = pSampleData[idx].m_counterValues->m_data;
-                                //std::cout << lastSlowLimit << "\n";
                             }
 
                             
                             //combining an update function and the print funciton as one
-                            if (notUpdate)
+                            if (notUpdate && idx == nbrSamples -1)
                                 fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[idx].m_counterValues->m_data);
                             if (enableLog)
                             {
                                 if (firstPrint)
                                 {
                                     outputLog << counterDesc.m_name << ',';
-                                    //fprintf(stdout, "logged: %f\n", pSampleData[idx].m_counterValues->m_data);
+                                    outputLog.flush();
+                                    didFirstPrint = true;
                                 }
                                 else
                                 {
                                     outputLog << pSampleData[idx].m_counterValues->m_data << ',';
+                                    outputLog.flush();
                                 }
-                                
-                                //fprintf(stdout, "logged: %f\n", pSampleData[idx].m_counterValues->m_data);
                             }
                             
+                            
+                            pSampleData[idx].m_counterValues++;
+                        }
+                        if (enableLog)
+                        {
+                            
+                        }
+                        
+                    } // iterate over the sampled counters
+                    
+                }
+                
+            }
+        } while (false);
+        return true;
+
+    }
+
+
+    std::string getPrint(bool notUpdate, bool printLog)
+    {
+        std::string returnString = "";
+
+        //do while loop for the ability to break out if needed
+        do
+        {
+            // sleep for refresh duration - at least equivalent to the sampling interval specified
+#if defined ( WIN32 )
+        // Windows
+            if (samplingInterval < 50)
+            {
+                Sleep(50);
+
+            }
+            else
+            {
+                Sleep(samplingInterval);
+            }
+#else
+        // Linux
+            usleep(samplingInterval * 1000);
+#endif
+
+            // read all the counter values
+            AMDTPwrSample* pSampleData = nullptr;
+
+            hResult = AMDTPwrReadAllEnabledCounters(&nbrSamples, &pSampleData);
+
+            if (AMDT_STATUS_OK != hResult)
+            {
+                //Retries to read the data if it fails
+                continue;
+
+            }
+            //std::cout << nbrSamples << "\n";
+            if (nullptr != pSampleData)
+            {
+                // iterate over all the samples and report the sampled counter values
+                for (AMDTUInt32 idx = 0; idx < nbrSamples; idx++)
+                {
+                    if (didFirstPrint)
+                    {
+                        firstPrint = false;
+                    }
+                    if (enableLog && !firstPrint)
+                    {
+                        while (!outputLog.is_open())
+                        {
+                            outputLog.open(logName);
+                        }
+                        outputLog << '\n';
+                        outputLog.flush();
+                    }
+
+                    //std::cout << "idx =" << idx <<"\n";
+                    //system("pause");
+                    // Iterate over the sampled counter values and print
+                    for (unsigned int i = 0; i < pSampleData[idx].m_numOfCounter; i++)
+                    {
+                        if (nullptr != pSampleData[idx].m_counterValues)
+                        {
+
+                            // Get the counter descriptor to print the counter name
+                            AMDTPwrCounterDesc counterDesc;
+                            hResult = AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
+
+                            std::string temp = counterDesc.m_name;
+                            if (socketPowerDesc.find(temp) != std::string::npos)
+                            {
+                                lastSocketPower = pSampleData[idx].m_counterValues->m_data;
+                            }
+                            else if (stapmLimitDesc.find(temp) != std::string::npos)
+                            {
+                                lastStapmLimit = pSampleData[idx].m_counterValues->m_data;
+                            }
+                            else if (fastLimitDesc.find(temp) != std::string::npos)
+                            {
+                                lastFastLimit = pSampleData[idx].m_counterValues->m_data;
+                            }
+                            else if (slowLimitDesc.find(temp) != std::string::npos)
+                            {
+                                lastSlowLimit = pSampleData[idx].m_counterValues->m_data;
+                            }
+
+
+                            //combining an update function and the print funciton as one
+                            if (notUpdate && idx == (nbrSamples - 1))
+                            {
+                                stringstream ssName;
+                                stringstream ssData;
+                                ssName << counterDesc.m_name;
+                                ssData << pSampleData[idx].m_counterValues->m_data;;
+                                returnString += ssName.str() + " : " + ssData.str() + '\n';
+                            }
+                            if (enableLog)
+                            {
+                                if (firstPrint)
+                                {
+                                    outputLog << counterDesc.m_name << ',';
+                                    outputLog.flush();
+                                    didFirstPrint = true;
+                                }
+                                else
+                                {
+                                    outputLog << pSampleData[idx].m_counterValues->m_data << ',';
+                                    outputLog.flush();
+                                }
+                            }
+
 
                             pSampleData[idx].m_counterValues++;
                         }
-                        
-                        
+                        if (enableLog)
+                        {
+
+                        }
+
                     } // iterate over the sampled counters
+
                 }
+
             }
         } while (false);
-        firstPrint = false;
-        return true;
+        return returnString;
 
     }
 
@@ -241,20 +380,27 @@ public:
 
     bool initializeUProf(bool readPState, bool readCorePower, bool readFrequency)
     {
+        
+        
         //create log file if enabled
         if (enableLog)
         {
+            time(&now);
             stringstream ss;
             string temp;
-            time(&now);
+            
             ss << now;
             ss >> temp;
             temp += ".csv";
             temp = "log" + temp;
             
-            outputLog.open(temp);
+            
             logName = temp;
+            outputLog.open(logName);
         }
+        time(&now);
+        now -= 3;
+
         //try to initialize online mode and try to catch exceptions (it doesn't work in reality, IDK why)
         try
         {
@@ -271,7 +417,7 @@ public:
 
 
         // passing off the sapling interval
-        hResult = AMDTPwrSetTimerSamplingPeriod(100);
+        hResult = AMDTPwrSetTimerSamplingPeriod(samplingInterval);
 
         //assert(AMDT_STATUS_OK == hResult);
 
@@ -384,3 +530,4 @@ public:
 };
 
 // You're still here? It's over. Go home. Go!
+#endif
