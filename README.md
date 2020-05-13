@@ -1,5 +1,5 @@
 # RyzenSmartTuning
-### An application for making Ryzen mobile APUs run faster. Research into the Ryzen Mobile SMU and it's operations.
+An application for making Ryzen mobile APUs run faster. Research into the Ryzen Mobile SMU and it's operations.
 
 ## Goals
 * To create a powerful yet easy to use application for allowing AMD Ryzen Mobile to draw more power .
