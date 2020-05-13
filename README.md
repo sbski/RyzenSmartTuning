@@ -1,6 +1,25 @@
 # RyzenSmartTuning
-A utility for making Ryzen mobile APUs run faster. We are currently looking at the feasability of doing this but right now it looks good. Currently, We work with visual studios but if anyone wants to give it a shot outside of that, all the neccisary files are included. You might need to have AMD's uProf software installed to be able to compile. Visual Studios is setup to run with the main RyzenSmartTuning folder copied to C:/.
+### An application for making Ryzen mobile APUs run faster and research into Ryzen Mobile's SMU.
 
-You can install uProf here: https://developer.amd.com/amd-uprof/
+## Goals
+* Create a powerful yet easy to use application for allowing AMD Ryzen Mobile to draw more power 
+* To make this form of *overclocking* easier and safer.
+* Grasp a deeper understanding of how the SMU works on AMD Mobile
 
-Huge shoutout to FlyGoat for his help on this project and for RyzenAdj. You can check out RyzenAdj here: https://github.com/FlyGoat/RyzenAdj
+## Requrements:
+* 64-bit Windows (built to run on Windows 10)
+* AMD's uProf for the drivers 
+  * You can install AMD's uProf Software here: https://developer.amd.com/amd-uprof/
+* RyzenAdj is reccomended.
+* AMD Ryzen Mobile Processor
+  * Zen and Zen+ are better supported than Zen 2 based APUs
+
+## Credit and Thank-Yous:
+* AMD
+  * uProf
+  * PowerProfile API
+  * For not locking this down
+* Huge shoutout to FlyGoat for his help on this project and for RyzenAdj. You can check out RyzenAdj here: https://github.com/FlyGoat/RyzenAdj
+* The Ryzen Controller Team for giving me inspiration
+* My stupid Lenovo 330s-15ARR for not dieing on me yet
+* My high-school coding teacher who sparked my intrest in coding
