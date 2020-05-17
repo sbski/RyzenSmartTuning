@@ -17,8 +17,8 @@ An application for making Ryzen mobile APUs run faster. Research into the Ryzen 
 
 ## Credit
 * Huge shoutout to FlyGoat for his help on this project and for RyzenAdj. You can check out RyzenAdj [here](https://github.com/FlyGoat/RyzenAdj)
-  * None of this would have been posible without his work and help!
-* JamesCJ for being the first one to help and for providing some infromation on Ryzen Controller.
+  * None of this would have been possible without his work and help!
+* JamesCJ for being the first one to help and for providing some information on Ryzen Controller.
 * AMD
   * uProf
   * PowerProfile API
