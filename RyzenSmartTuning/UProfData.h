@@ -18,19 +18,15 @@ using namespace std;
 
 class UProfData
 {
-    //creation of log
-    ofstream outputLog;
-    time_t now;
-
-    std::string logName;
     
+public:
 
     bool enableLog;
     bool firstPrint;
     bool didFirstPrint;
 
     //-------------------------- Other data --------------------------
-    AMDTUInt32 threadCount;
+    AMDTUInt32 threadIndex = 0;
 
     AMDTUInt32 nbrCounters;
     AMDTPwrCounterDesc* pCounters;
@@ -47,23 +43,48 @@ class UProfData
 
 
 
-public:
+
+    //creation of log
+    ofstream outputLog;
+    time_t now;
+
+    std::string logName;
+
     //IDs of important counters
     AMDTUInt32 socketPowerId;
     AMDTUInt32 stapmLimitId;
     AMDTUInt32 fastLimitId;
     AMDTUInt32 slowLimitId;
 
+    
+    AMDTUInt32 stapmPowerId = 1;
+    AMDTInt32 socTempId = 6;
+    AMDTInt32 socketTempId = 61;
+    AMDTInt32 threadFreqId[16];
+
+    AMDTUInt32 numberOfSamples;
+
     //descriptions of important counters
     std::string socketPowerDesc;
-    std::string stapmLimitDesc;
+    std::string stapmLimitDesc = "Socket0 STAPM Limit";
     std::string fastLimitDesc;
     std::string slowLimitDesc;
+    std::string socketTempDesc = "Socket0 Temperature";
+    std::string packagePowerDesc = "Socket0 Package Power";
 
-    float lastSocketPower;
-    float lastStapmLimit;
-    float lastFastLimit;
-    float lastSlowLimit;
+    AMDTFloat32 lastSocketPower;
+    AMDTFloat32 lastStapmLimit;
+    AMDTFloat32 lastFastLimit;
+    AMDTFloat32 lastSlowLimit;
+    AMDTFloat32 lastPackagePower;
+
+    AMDTFloat32 lastSocTemp;
+    AMDTFloat32 lastSocketTemp;
+    AMDTFloat32 lastStapmPower = -1;
+    AMDTFloat32 lastThreadFreq[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+
+    AMDTUInt32 threadCount;
+
 
     //prevents false starts on uProf
     UProfData()
@@ -73,6 +94,8 @@ public:
 
     UProfData(AMDTUInt32 setInterval, bool incomingEnableLog)
     {
+        
+        numberOfSamples = 0;
         firstPrint = true;
         didFirstPrint = false;
 
@@ -82,7 +105,6 @@ public:
 
         // Thread data
         threadCount = std::thread::hardware_concurrency();
-
         nbrCounters = 0;
         pCounters = nullptr;
 
@@ -100,155 +122,19 @@ public:
     //update() is really just a print(false)
     bool update()
     {
-        return (print(false, true));
-    }
-
-    //pass a true to print(bool)
-    bool print()
-    {
-        return print(true, true);
-    }
-    bool print(bool notUpdate)
-    {
-        return print(notUpdate, true);
-    }
-
-    //bool tells print if it's an update or not
-    bool print(bool notUpdate, bool printLog)
-    {
-        
-
-        //do while loop for the ability to break out if needed
-        do
-        {
-            // sleep for refresh duration - at least equivalent to the sampling interval specified
-#if defined ( WIN32 )
-        // Windows
-            if (samplingInterval < 50)
-            {
-                Sleep(50);
-
-            }
-            else
-            {
-                Sleep(samplingInterval);
-            }
-#else
-        // Linux
-            usleep(samplingInterval * 1000);
-#endif
-            
-            // read all the counter values
-            AMDTPwrSample* pSampleData = nullptr;
-
-            hResult = AMDTPwrReadAllEnabledCounters(&nbrSamples, &pSampleData);
-
-            if (AMDT_STATUS_OK != hResult)
-            {
-                //Retries to read the data if it fails
-                continue;
-                
-            }
-            //std::cout << nbrSamples << "\n";
-            if (nullptr != pSampleData)
-            {
-                // iterate over all the samples and report the sampled counter values
-                for (AMDTUInt32 idx = 0; idx < nbrSamples; idx++)
-                {
-                    if (notUpdate && idx == nbrSamples - 1)
-                    {
-                        system("cls");
-                        std::cout << nbrSamples << std::endl;
-                    }
-                    if (didFirstPrint)
-                    {
-                        firstPrint = false;
-                    }
-                    if (enableLog && !firstPrint)
-                    {
-                        while (!outputLog.is_open())
-                        {
-                            outputLog.open(logName);
-                        }
-                        outputLog << '\n';
-                        outputLog.flush();
-                    }
-                    
-                    //std::cout << "idx =" << idx <<"\n";
-                    //system("pause");
-                    // Iterate over the sampled counter values and print
-                    for (unsigned int i = 0; i < pSampleData[idx].m_numOfCounter; i++)
-                    {
-                        if (nullptr != pSampleData[idx].m_counterValues)
-                        {
-                            
-                            // Get the counter descriptor to print the counter name
-                            AMDTPwrCounterDesc counterDesc;
-                            hResult = AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
-
-                            std::string temp = counterDesc.m_name;
-                            if (socketPowerDesc.find(temp) != std::string::npos)
-                            {
-                                lastSocketPower = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (stapmLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastStapmLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (fastLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastFastLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (slowLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastSlowLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
-
-                            
-                            //combining an update function and the print funciton as one
-                            if (notUpdate && idx == nbrSamples -1)
-                                fprintf(stdout, "%s : %f\n", counterDesc.m_name, pSampleData[idx].m_counterValues->m_data);
-                            if (enableLog)
-                            {
-                                if (firstPrint)
-                                {
-                                    outputLog << counterDesc.m_name << ',';
-                                    outputLog.flush();
-                                    didFirstPrint = true;
-                                }
-                                else
-                                {
-                                    outputLog << pSampleData[idx].m_counterValues->m_data << ',';
-                                    outputLog.flush();
-                                }
-                            }
-                            
-                            
-                            pSampleData[idx].m_counterValues++;
-                        }
-                        if (enableLog)
-                        {
-                            
-                        }
-                        
-                    } // iterate over the sampled counters
-                    
-                }
-                
-            }
-        } while (false);
-        return true;
-
+        std::string temp = getPrint(true, 0);
+        return (&temp != nullptr);
     }
 
 
-    std::string getPrint(bool notUpdate, bool printLog)
+    std::string getPrint(bool notUpdate, AMDTUInt32 additionalLog)
     {
         std::string returnString = "";
-
+        threadIndex = 0;
         //do while loop for the ability to break out if needed
         do
         {
+            /*
             // sleep for refresh duration - at least equivalent to the sampling interval specified
 #if defined ( WIN32 )
         // Windows
@@ -265,7 +151,7 @@ public:
         // Linux
             usleep(samplingInterval * 1000);
 #endif
-
+*/
             // read all the counter values
             AMDTPwrSample* pSampleData = nullptr;
 
@@ -283,6 +169,8 @@ public:
                 // iterate over all the samples and report the sampled counter values
                 for (AMDTUInt32 idx = 0; idx < nbrSamples; idx++)
                 {
+                    numberOfSamples++;
+
                     if (didFirstPrint)
                     {
                         firstPrint = false;
@@ -309,23 +197,7 @@ public:
                             AMDTPwrCounterDesc counterDesc;
                             hResult = AMDTPwrGetCounterDesc(pSampleData[idx].m_counterValues->m_counterID, &counterDesc);
 
-                            std::string temp = counterDesc.m_name;
-                            if (socketPowerDesc.find(temp) != std::string::npos)
-                            {
-                                lastSocketPower = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (stapmLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastStapmLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (fastLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastFastLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
-                            else if (slowLimitDesc.find(temp) != std::string::npos)
-                            {
-                                lastSlowLimit = pSampleData[idx].m_counterValues->m_data;
-                            }
+                            
 
 
                             //combining an update function and the print funciton as one
@@ -333,9 +205,61 @@ public:
                             {
                                 stringstream ssName;
                                 stringstream ssData;
+                                stringstream ssCat;
                                 ssName << counterDesc.m_name;
-                                ssData << pSampleData[idx].m_counterValues->m_data;;
-                                returnString += ssName.str() + " : " + ssData.str() + '\n';
+                                ssData << pSampleData[idx].m_counterValues->m_data;
+                                ssCat << pSampleData[idx].m_counterValues->m_counterID;
+                                returnString += ssName.str() + " : " + ssData.str() +'\n';
+
+                                std::string temp = counterDesc.m_name;
+                                if (socketPowerDesc.find(temp) != std::string::npos)
+                                {
+                                    lastSocketPower = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (stapmLimitDesc.find(temp) != std::string::npos)
+                                {
+                                    lastStapmLimit = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (fastLimitDesc.find(temp) != std::string::npos)
+                                {
+                                    lastFastLimit = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (slowLimitDesc.find(temp) != std::string::npos)
+                                {
+                                    lastSlowLimit = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (socketTempDesc.find(temp) != std::string::npos)
+                                {
+                                    lastSocketTemp = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (packagePowerDesc.find(temp) != std::string::npos)
+                                {
+                                    lastPackagePower = pSampleData[idx].m_counterValues->m_data;
+                                }
+                                else if (pSampleData[idx].m_counterValues->m_counterID == threadFreqId[threadIndex])
+                                {
+                                    lastThreadFreq[threadIndex] = pSampleData[idx].m_counterValues->m_data;
+                                    threadIndex++;
+                                }
+                                else
+                                {
+                                    //std::cout << pSampleData[idx].m_counterValues->m_counterID << " | " << pSampleData[idx].m_counterValues->m_data << std::endl;
+                                    switch (pSampleData[idx].m_counterValues->m_counterID)
+                                    {
+                                    case 1:
+                                        lastStapmPower = AMDTFloat32(pSampleData[idx].m_counterValues->m_data);
+                                        break;
+
+                                    case 6:
+                                        lastSocTemp = AMDTFloat32(pSampleData[idx].m_counterValues->m_data);
+                                        break;
+
+                                    case 66:
+                                        lastSocketTemp = AMDTFloat32(pSampleData[idx].m_counterValues->m_data);
+                                        break;
+                                    }
+                                }
+                                //system("pause");
                             }
                             if (enableLog)
                             {
@@ -361,11 +285,23 @@ public:
                         }
 
                     } // iterate over the sampled counters
-
+                    
                 }
+                if (additionalLog && nullptr != pSampleData)
+                {
 
+                    outputLog << additionalLog << ',';
+                    outputLog.flush();
+
+                    stringstream ssName;
+                    stringstream ssData;
+                    ssName << "Additional Info: ";
+                    ssData << additionalLog;
+                    returnString += ssName.str() + " : " + ssData.str() + '\n';
+                }
             }
         } while (false);
+        
         return returnString;
 
     }
@@ -375,7 +311,7 @@ public:
     // sets uprof up for starting
     void initializeUProf()
     {
-        initializeUProf(true, true, true);
+        initializeUProf(false, false, true);
     }
 
     bool initializeUProf(bool readPState, bool readCorePower, bool readFrequency)
@@ -456,6 +392,8 @@ public:
         hResult = AMDTPwrGetCounterDesc(slowLimitId, &tempDesc);
         assert(AMDT_STATUS_OK == hResult);
         slowLimitDesc = tempDesc.m_name;
+        
+
 
         //get the number of counters
         hResult = AMDTPwrGetSupportedCounters(&nbrCounters, &pCounters);
@@ -469,6 +407,8 @@ public:
         AMDTUInt32 nbrSamples = 0;
 
         //create output file.
+        ofstream counterOutputLog;
+        counterOutputLog.open("CounterInfo.txt");
 
 
         //enable counters
@@ -482,12 +422,23 @@ public:
 
                 //getting the description of the current counter ID so that we can disable it based on name
                 AMDTPwrGetCounterDesc(pCurrCounter->m_counterID, &counterDesc);
-                std::string currName = counterDesc.m_name;
+                stringstream ssCntDesc;
+                ssCntDesc << pCurrCounter->m_name;
+                std::string currName = ssCntDesc.str();
 
                 //temperary bools to improve readability
                 bool isPState = currName.find("P-State") != std::string::npos;
                 bool isCorePower = currName.find("Core") != std::string::npos && currName.find("Power") != std::string::npos;
                 bool isFrequency = currName.find(" Effective Frequency") != std::string::npos;
+                bool isCoreFreqency = currName.length() == 32 && currName.find("Thread") != std::string::npos && currName.find(" Effective Frequency") != std::string::npos;
+
+                isCoreFreqency = isCoreFreqency || ((currName.length() == 32 || currName.length() == 32) && currName.find("Thread") != std::string::npos && currName.find("Core Effective Frequency") != std::string::npos);
+                if (currName.find("Socket0 STAPM Power") != std::string::npos)
+                {
+                    //std::cout << pCurrCounter->m_counterID << endl;
+                }
+                
+                std::cout << cnt << "|" << currName << '\n';
 
                 // Check to see if we want to enable the counter or not
                 if ((isPState && !readPState) || (isCorePower && !readCorePower) || (isFrequency && !readFrequency))
@@ -496,14 +447,20 @@ public:
                 }
                 else
                 {
+                    if (isCoreFreqency)
+                    {
+                        threadFreqId[threadIndex] = pCurrCounter->m_counterID;
+                        threadIndex++;
+                    }
                     // Enable all the counter
                     hResult = AMDTPwrEnableCounter(pCurrCounter->m_counterID);
                     // Assert that the counter enabled properly (or that it was already enabled)
                     assert(AMDT_STATUS_OK == hResult || AMDT_ERROR_COUNTER_ALREADY_ENABLED == hResult);
+
                 }
             }
         }
-        
+        //system("pause");
         return true;
     }
 
@@ -526,8 +483,105 @@ public:
         return true;
     }
 
-    
+
+
+
+    AMDTFloat32 getFastLimit()
+    {
+        return lastFastLimit;
+    }
+
+    AMDTFloat32 getSlowLimit()
+    {
+        return lastSlowLimit;
+    }
+
+    AMDTFloat32 getStapmLimit()
+    {
+        return lastStapmLimit;
+    }
+
+    AMDTFloat32 getSocketPower()
+    {
+        return lastSocketPower;
+    }
+
+
 };
 
 // You're still here? It's over. Go home. Go!
 #endif
+
+
+/*
+
+0|Thread0 Core Effective Frequency
+1|Thread0 Histogram-Core Effective Frequency
+2|Thread1 Core Effective Frequency
+3|Thread1 Histogram-Core Effective Frequency
+4|Thread2 Core Effective Frequency
+5|Thread2 Histogram-Core Effective Frequency
+6|Thread3 Core Effective Frequency
+7|Thread3 Histogram-Core Effective Frequency
+8|Thread4 Core Effective Frequency
+9|Thread4 Histogram-Core Effective Frequency
+10|Thread5 Core Effective Frequency
+11|Thread5 Histogram-Core Effective Frequency
+12|Thread6 Core Effective Frequency
+13|Thread6 Histogram-Core Effective Frequency
+14|Thread7 Core Effective Frequency
+15|Thread7 Histogram-Core Effective Frequency
+16|Thread8 Core Effective Frequency
+17|Thread8 Histogram-Core Effective Frequency
+18|Thread9 Core Effective Frequency
+19|Thread9 Histogram-Core Effective Frequency
+20|Thread10 Core Effective Frequency
+21|Thread10 Histogram-Core Effective Frequency
+22|Thread11 Core Effective Frequency
+23|Thread11 Histogram-Core Effective Frequency
+24|Thread12 Core Effective Frequency
+25|Thread12 Histogram-Core Effective Frequency
+26|Thread13 Core Effective Frequency
+27|Thread13 Histogram-Core Effective Frequency
+28|Thread14 Core Effective Frequency
+29|Thread14 Histogram-Core Effective Frequency
+30|Thread15 Core Effective Frequency
+31|Thread15 Histogram-Core Effective Frequency
+32|Thread0 P-State
+33|Thread1 P-State
+34|Thread2 P-State
+35|Thread3 P-State
+36|Thread4 P-State
+37|Thread5 P-State
+38|Thread6 P-State
+39|Thread7 P-State
+40|Thread8 P-State
+41|Thread9 P-State
+42|Thread10 P-State
+43|Thread11 P-State
+44|Thread12 P-State
+45|Thread13 P-State
+46|Thread14 P-State
+47|Thread15 P-State
+48|Socket0 Package Power
+49|Socket0 Cummulative-Package Power
+50|Core0 Power
+51|Core0 Cummulative-Power
+52|Core1 Power
+53|Core1 Cummulative-Power
+54|Core2 Power
+55|Core2 Cummulative-Power
+56|Core3 Power
+57|Core3 Cummulative-Power
+58|Core4 Power
+59|Core4 Cummulative-Power
+60|Core5 Power
+61|Core5 Cummulative-Power
+62|Core6 Power
+63|Core6 Cummulative-Power
+64|Core7 Power
+65|Core7 Cummulative-Power
+66|Socket0 Temperature
+
+
+*/

@@ -112,7 +112,7 @@ int main()
 
 
         //user input
-        fprintf(stdout, "Enter In 0 for any setting you do not want to be applied\n");
+        fprintf(stdout, "--------------------------------------------------------\nEnter In 0 for any setting you do not want to be applied\n--------------------------------------------------------\n");
         //all of the descriptions here with the index of where they go when the go off to RST
         const char* description[24] = {"0. STAPM Limit (W)", "1. Fast Limit (W)", "2. Slow Limit (W)",  "3. Slow Time (Package Power Tracking (PPT) - Slow period) (S)",
         "4. STAPM Time (CPU Boost Period) (S)", "5. Tctl Temperature (Degrees C)", "6. VRM Current Limit (A)", "7. VRM SoC Current Limit (mA)",
@@ -123,7 +123,7 @@ int main()
         //removing extra options for now
         for (int i = 0; i < 24; i++)
         {
-            if (((i < 9 || i > 19   ) && i != 3 && i != 6 && i != 7) || i == 10 || i == 14 || i == 15)
+            if (((i < 9 || i > 19   ) && i != 3 && i != 6 && i != 7) || i == 10 || i == 14 || i == 15&&true)
             {
                 
 
@@ -168,9 +168,9 @@ int main()
     
     //std::system("pause");
     
-    if (customSamplingInterval < 10)
+    if (customSamplingInterval < 100)
     {
-        customSamplingInterval = 10;
+        customSamplingInterval = 100;
     }
 
     //sending all the data off to RST
@@ -186,8 +186,28 @@ int main()
         printf("Unable to init ryzenadj, check permission\n");
         std::system("pause");
     }
+
+
+    /*
+    ifstream lastPosition("lastMsgID.txt");
+    string strID;
+    int messageID;
+    getline(lastPosition, strID);
+    std::istringstream(strID) >> messageID;
+    if (messageID <= 0)
+    {
+        std::cout << "LastMsgID not found please enter the last Message ID: ";
+        std::cin >> messageID;
+    }
+    //ryzenST.startTactiPoke(messageID);*/
+    //ryzenST.startStapmMulti(200, 200, 3);
+
+    //ryzenST.findSafePower(65, 85, 15000, 3);
+
     //starting RST
-    ryzenST.startRST();
+    //ryzenST.startRSTBenchMarkMode();
+    //ryzenST.startTestRST();
+    ryzenST.startSmartTune(75, 40000, 15000);
 
     return 0;
 }
