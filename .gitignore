@@ -358,3 +358,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+*.stash
+*.csv
+RyzenSmartTuning/lastMsgID.txt
+RyzenSmartTuning/CounterInfo.txt
+RyzenSmartTuning/settings.txt
+RyzenSmartTuning/settings.txt
+RyzenSmartTuning/settings.txt
